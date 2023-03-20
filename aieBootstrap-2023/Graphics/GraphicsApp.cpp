@@ -33,7 +33,7 @@ bool GraphicsApp::Startup() {
 	m_light.color = glm::vec3(1, 1, 0);
 	m_ambientLight = glm::vec3(0.25f, 0.25f, 0.25f);
 	
-	//m_solarSystem = new SolarSystem();
+	m_solarSystem = new SolarSystem();
 	
 	return LaunchShaders();
 }
@@ -43,7 +43,7 @@ void GraphicsApp::Shutdown()
 	Gizmos::destroy();
 }
 
-void GraphicsApp::Update(float deltaTime) {
+void GraphicsApp::Update(float _deltaTime) {
 
 	// wipe the gizmos clean for this frame
 	Gizmos::clear();
@@ -63,7 +63,7 @@ void GraphicsApp::Update(float deltaTime) {
 	// add a transform so that we can see the axis
 	Gizmos::addTransform(mat4(1));
 
-	//m_solarSystem->Update(deltaTime);
+	m_solarSystem->Update(_deltaTime);
 	
 	// quit if we press escape
 	aie::Input* input = aie::Input::getInstance();
@@ -72,15 +72,12 @@ void GraphicsApp::Update(float deltaTime) {
 	float time = getTime();
 
 	// use the time to add to the rotation rate variable (in radians)
-	m_rotationRate += time * 0.00001f;
-	if (m_rotationRate > glm::pi<float>() / 2000.0f)
-		m_rotationRate -= glm::pi<float>() / 2000.0f;
-	
+	m_rotationRate = .002f;
 	
 	// Rotate the light to emulate a 'day/night' cycle
-	m_light.direction = glm::normalize(glm::vec3(1, glm::cos(time) * 2, glm::sin(time) * 2));
+	m_light.direction = glm::normalize(glm::vec3(glm::cos(time) * 2, 1, glm::sin(time) * 2));
 
-	m_camera.Update(deltaTime);
+	m_flyCamera.Update(_deltaTime);
 
 	if (input->isKeyDown(aie::INPUT_KEY_ESCAPE))
 		quit();
@@ -98,20 +95,22 @@ void GraphicsApp::draw() {
 	*/
 
 	// create simple camera transforms
-	m_viewMatrix = m_camera.GetViewMatrix();
+	m_viewMatrix = m_flyCamera.GetViewMatrix();
 	//glm::lookAt(vec3(10), vec3(0), vec3(0, 1, 0));
-	m_projectionMatrix = m_camera.GetProjectionMatrix(getWindowWidth(), getWindowHeight());
+	//m_projectionMatrix = m_flyCamera.GetProjectionMatrix(getWindowWidth(), getWindowHeight());
+	m_projectionMatrix = m_flyCamera.GetProjectionMatrix();
 	
 	auto pv = m_projectionMatrix * m_viewMatrix;
 	
 	//QuadDraw(pv * m_quadTransform);
+	QuadTextureDraw(pv * m_quadTransform);
 	//BunnyDraw(pv  * m_bunnyTransform);
 	//PhongDraw(pv * m_bunnyTransform, m_bunnyTransform);
 
 	//BoxDraw(pv * m_boxTransform, m_boxTransform);
-	CylinderDraw(pv * m_cylinderTransform, m_cylinderTransform);
+	//CylinderDraw(pv * m_cylinderTransform, m_cylinderTransform);
 
-	//m_solarSystem->Draw();
+	m_solarSystem->Draw();
 
 	
 	
@@ -126,8 +125,10 @@ bool GraphicsApp::LaunchShaders()
 
 #pragma endregion
 
-	if(!CylinderLoader(10, 1.0f, 0.50f))
+	if(!QuadTextureLoader())
 		return false;
+	/*if(!CylinderLoader(10, 1.0f, 0.50f))
+		return false;*/
 	//if(!BoxLoader())
 	//	return false;
 	/*if(!BunnyLoader())
@@ -404,6 +405,56 @@ void GraphicsApp::BunnyDraw(glm::mat4 _pvm)
 
 	// Draw the bunny
 	m_bunnyMesh.draw();
+}
+
+bool GraphicsApp::QuadTextureLoader()
+{
+	m_texturedShader.loadShader(aie::eShaderStage::VERTEX, "./shaders/textured.vert");
+	m_texturedShader.loadShader(aie::eShaderStage::FRAGMENT, "./shaders/textured.frag");
+
+	if (m_texturedShader.link() == false)
+	{
+		printf("Textured Shader has an Error: %s\n", m_texturedShader.getLastError());
+		return false;
+	}
+	
+	if(m_gridTexture.load("./textures/numbered_grid.tga") == false)
+	{
+		printf("Failed to load the grid texture correctly\n");
+		return false;
+	}
+
+	
+	m_quadMesh.InitialiseQuad();
+	
+	
+	// This is a 10 'unit' wide quad
+	m_quadTransform = {
+		10,  0,  0, 0,
+		 0, 10,  0, 0,
+		 0,  0, 10, 0,
+		 0,  0,  0, 1
+	};
+
+	return true;
+}
+
+void GraphicsApp::QuadTextureDraw(glm::mat4 _pvm)
+{
+	// Bind the shader
+	m_texturedShader.bind();
+	
+	//Bind the transform
+	m_texturedShader.bindUniform("ProjectionViewModel", _pvm);
+
+	// Bind the diffuse texture location
+	m_texturedShader.bindUniform("diffuseTexture", 0);
+
+	// Bind the texture to a specific location
+	m_gridTexture.bind(0);
+
+	// Draw the quad using the Mesh's draw
+	m_quadMesh.Draw();
 }
 
 void GraphicsApp::PhongDraw(glm::mat4 _pvm, glm::mat4 _transform)

@@ -4,6 +4,10 @@
 
 BaseCamera::BaseCamera()
 {
+    m_position = glm::vec3(-10, 2, 0);
+    m_aspectRatio = 16.0f / 9.0f;
+    m_theta = 0;
+    m_phi = 0;
 }
 
 void BaseCamera::Update(float _deltaTime)
@@ -17,22 +21,32 @@ glm::vec3 BaseCamera::GetPosition() const
 
 glm::mat4 BaseCamera::GetWorldTransform(glm::vec3 _cameraPosition, glm::vec3 _eulerAngles, glm::vec3 _scale)
 {
-    return glm::mat4();
+    return m_worldTransform;
 }
 
 glm::mat4 BaseCamera::GetProjectionViewMatrix()
 {
-    return glm::mat4();
+    return GetProjectionMatrix() * GetViewMatrix();
 }
 
 glm::mat4 BaseCamera::GetProjectionMatrix()
 {
-    return glm::mat4();
+    return glm::perspective(glm::pi<float>() * 0.25f,
+                            m_aspectRatio,
+                            0.1f, 1000.0f);
 }
 
 glm::mat4 BaseCamera::GetViewMatrix()
 {
-    return m_viewTransform;
+    float thetaR = glm::radians(m_theta);
+    float phiR = glm::radians(m_phi);
+    glm::vec3 forward(glm::cos(phiR) * glm::cos(thetaR),
+                      glm::sin(phiR),
+                      glm::cos(phiR) * glm::sin(thetaR));
+
+    return glm::lookAt(m_position,
+                     m_position + forward,
+                        glm::vec3(0, 1, 0));
 }
 
 float BaseCamera::GetAspectRatio()

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Application.h"
+#include "FlyCamera.h"
 #include "Mesh.h"
 #include "OBJMesh.h"
 #include "Shader.h"
@@ -8,6 +9,7 @@
 
 #include <imgui.h>
 #include <glm/mat4x4.hpp>
+
 
 #include "SolarSystem.h"
 
@@ -62,15 +64,21 @@ protected:
 	bool BunnyLoader();
 	void BunnyDraw(glm::mat4 _pvm);
 
+	bool QuadTextureLoader();
+	void QuadTextureDraw(glm::mat4 _pvm);
+	
 	void PhongDraw(glm::mat4 _pvm, glm::mat4 _transform);
 
 	// camera transforms
 	glm::mat4			m_viewMatrix;
 	glm::mat4			m_projectionMatrix;
 
+	aie::Texture		m_gridTexture;
+	
 	aie::ShaderProgram	m_simpleShader;
 	aie::ShaderProgram	m_colorShader;
 	aie::ShaderProgram	m_phongShader;
+	aie::ShaderProgram	m_texturedShader;
 	
 	Mesh				m_quadMesh;
 	glm::mat4			m_quadTransform;
@@ -85,6 +93,7 @@ protected:
 	glm::mat4			m_bunnyTransform;
 
 	SimpleCamera		m_camera;
+	FlyCamera			m_flyCamera;
 	
 	struct Light
 	{
@@ -100,5 +109,5 @@ protected:
 	float m_rotationRate = 0.0f;
 	
 private:
-	//SolarSystem* m_solarSystem = nullptr;
+	SolarSystem* m_solarSystem = nullptr;
 };
