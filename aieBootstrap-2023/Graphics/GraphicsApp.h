@@ -4,6 +4,7 @@
 #include "Mesh.h"
 #include "OBJMesh.h"
 #include "Shader.h"
+#include "SimpleCamera.h"
 
 #include <imgui.h>
 #include <glm/mat4x4.hpp>
@@ -33,8 +34,8 @@ protected:
 	bool BoxLoader();
 	void BoxDraw(glm::mat4 _pvm, glm::mat4 _transform);
 
-	bool CylinderLoader();
-	void CylinderDraw(glm::mat4 _pvm);
+	bool CylinderLoader(int _segments, float _height, float _radius);
+	void CylinderDraw(glm::mat4 _pvm, glm::mat4 _transform);
 
 	bool PyramidLoader();
 	void PyramidDraw(glm::mat4 _pvm);
@@ -53,6 +54,9 @@ protected:
 
 	bool TorusLoader();
 	void TorusDraw(glm::mat4 _pvm);
+
+	bool IcosahedronLoader();
+	void IcosahedronDraw(glm::mat4 _pvm);
 	
 	
 	bool BunnyLoader();
@@ -74,9 +78,14 @@ protected:
 	Mesh				m_boxMesh;
 	glm::mat4			m_boxTransform;
 
+	Mesh				m_cylinderMesh;
+	glm::mat4			m_cylinderTransform;
+
 	aie::OBJMesh		m_bunnyMesh;
 	glm::mat4			m_bunnyTransform;
 
+	SimpleCamera		m_camera;
+	
 	struct Light
 	{
 		glm::vec3 direction;

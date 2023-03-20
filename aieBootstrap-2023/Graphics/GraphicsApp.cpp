@@ -24,7 +24,7 @@ bool GraphicsApp::Startup() {
 
 	// initialise gizmo primitive counts
 	Gizmos::create(10000, 10000, 10000, 10000);
-
+	
 	// create simple camera transforms
 	m_viewMatrix = glm::lookAt(vec3(10), vec3(0), vec3(0, 1, 0));
 	m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f, 16.0f / 9.0f, 0.1f, 1000.0f);
@@ -80,6 +80,8 @@ void GraphicsApp::Update(float deltaTime) {
 	// Rotate the light to emulate a 'day/night' cycle
 	m_light.direction = glm::normalize(glm::vec3(1, glm::cos(time) * 2, glm::sin(time) * 2));
 
+	m_camera.Update(deltaTime);
+
 	if (input->isKeyDown(aie::INPUT_KEY_ESCAPE))
 		quit();
 
@@ -91,17 +93,27 @@ void GraphicsApp::draw() {
 	// wipe the screen to the background colour
 	clearScreen();
 
-	// update perspective based on screen size
+	/*// update perspective based on screen size
 	m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f, getWindowWidth() / (float)getWindowHeight(), 0.1f, 1000.0f);
+	*/
+
+	// create simple camera transforms
+	m_viewMatrix = m_camera.GetViewMatrix();
+	//glm::lookAt(vec3(10), vec3(0), vec3(0, 1, 0));
+	m_projectionMatrix = m_camera.GetProjectionMatrix(getWindowWidth(), getWindowHeight());
 	
 	auto pv = m_projectionMatrix * m_viewMatrix;
 	
 	//QuadDraw(pv * m_quadTransform);
-	BoxDraw(pv * m_boxTransform, m_boxTransform);
 	//BunnyDraw(pv  * m_bunnyTransform);
 	//PhongDraw(pv * m_bunnyTransform, m_bunnyTransform);
 
+	//BoxDraw(pv * m_boxTransform, m_boxTransform);
+	CylinderDraw(pv * m_cylinderTransform, m_cylinderTransform);
+
 	//m_solarSystem->Draw();
+
+	
 	
 	Gizmos::draw(m_projectionMatrix * m_viewMatrix);
 }
@@ -114,8 +126,10 @@ bool GraphicsApp::LaunchShaders()
 
 #pragma endregion
 
-	if(!BoxLoader())
+	if(!CylinderLoader(10, 1.0f, 0.50f))
 		return false;
+	//if(!BoxLoader())
+	//	return false;
 	/*if(!BunnyLoader())
 		return false;*/
 	
@@ -182,7 +196,7 @@ bool GraphicsApp::BoxLoader()
 
 	if (m_phongShader.link() == false)
 	{
-		printf("Simple Shader has an Error: %s\n", m_simpleShader.getLastError());
+		printf("Box Phong Shader has an Error: %s\n", m_simpleShader.getLastError());
 		return false;
 	}
 	
@@ -242,15 +256,14 @@ void GraphicsApp::BoxDraw(glm::mat4 _pvm, glm::mat4 _transform)
 	m_phongShader.bindUniform("AmbientColor", m_ambientLight);
 
 	// Bind the ambient, diffuse, specular and specular power
-	m_phongShader.bindUniform("Ka", glm::vec3(0.5f, 0.0f, 0.3f));
-	m_phongShader.bindUniform("Kd", glm::vec3(0.4f, 0.4f, 0.4f));
+	m_phongShader.bindUniform("Ka", glm::vec3(1.0f, 0.0f, 0.0f));
+	m_phongShader.bindUniform("Kd", glm::vec3(1.0f, 0.4f, 0.4f));
 	m_phongShader.bindUniform("Ks", glm::vec3(0.1f, 0.1f, 0.1f));
 	m_phongShader.bindUniform("specularPower", 10);
 
 	//m_bunnyMesh.draw();
 
-
-	// constantly rotate the box transform by the rotation rate
+	// Rotates the transform
 	m_boxTransform = glm::rotate(m_boxTransform, m_rotationRate, glm::vec3(0, 1, 0));
 	
 	
@@ -263,6 +276,92 @@ void GraphicsApp::BoxDraw(glm::mat4 _pvm, glm::mat4 _transform)
 	// Draw the quad using the Mesh's draw
 	m_boxMesh.Draw();
 }
+
+bool GraphicsApp::CylinderLoader(int _segments, float _height, float _radius)
+{
+	m_phongShader.loadShader(aie::eShaderStage::VERTEX, "./shaders/phong.vert");
+	m_phongShader.loadShader(aie::eShaderStage::FRAGMENT, "./shaders/phong.frag");
+
+	if(m_phongShader.link() == false)
+	{
+		printf("Cylinder Phong Shader has an Error: %s\n", m_simpleShader.getLastError());
+		return false;
+	}
+	
+	Mesh::Vertex* vertices = new Mesh::Vertex[_segments * 2 + 2];
+	for (int i = 0; i < _segments; ++i)
+	{
+		float theta = (i / (float)_segments) * glm::pi<float>() * 2.0f;
+		vertices[i].position = { cos(theta) * _radius, 0, sin(theta) * _radius, 1 };
+		vertices[i + _segments].position = { cos(theta) * _radius, _height, sin(theta) * _radius, 1 };
+	}
+	
+	unsigned int* indices = new unsigned int[_segments * 6 + _segments * 6];
+	for (int i = 0; i < _segments; ++i)
+	{
+		indices[i * 6 + 0] = i;
+		indices[i * 6 + 1] = i + _segments;
+		indices[i * 6 + 2] = (i + 1) % _segments;
+		indices[i * 6 + 3] = (i + 1) % _segments;
+		indices[i * 6 + 4] = i + _segments;
+		indices[i * 6 + 5] = (i + 1) % _segments + _segments;
+	}
+
+	m_cylinderMesh.Initialise(_segments * 2 + 2, vertices, _segments * 6 + _segments * 6, indices);
+	m_cylinderTransform = {
+		5,  0,  0, 0,
+		0, 5,  0, 0,
+		0,  0, 5, 0,
+		0,  0,  0, 1
+	};
+
+	return true;
+}
+
+void GraphicsApp::CylinderDraw(glm::mat4 _pvm, glm::mat4 _transform)
+{
+	// Bind the Phong shader
+	m_phongShader.bind();
+
+	m_phongShader.bindUniform("CameraPosition", m_cameraPosition);
+
+	// Bind the directional light
+	m_phongShader.bindUniform("LightDirection", m_light.direction);
+
+	// Bind the pvm using the projection view model
+	m_phongShader.bindUniform("ProjectionViewModel", _pvm);
+
+	// Bind the transform using the model matrix
+	m_phongShader.bindUniform("ModelMatrix", _transform);
+
+	// Bind the light color
+	m_phongShader.bindUniform("LightColor", (glm::vec3)m_light.color);
+
+	// Bind the ambient light using the ambient light
+	m_phongShader.bindUniform("AmbientColor", m_ambientLight);
+
+	// Bind the ambient, diffuse, specular and specular power
+	m_phongShader.bindUniform("Ka", glm::vec3(1.0f, 0.0f, 0.0f));
+	m_phongShader.bindUniform("Kd", glm::vec3(1.0f, 0.4f, 0.4f));
+	m_phongShader.bindUniform("Ks", glm::vec3(0.1f, 0.1f, 0.1f));
+	m_phongShader.bindUniform("specularPower", 10);
+
+	//m_bunnyMesh.draw();
+
+	// Rotates the transform
+	m_cylinderTransform = glm::rotate(m_cylinderTransform, m_rotationRate, glm::vec3(0, 1, 0));
+	
+	
+	/*// Bind the shader
+	m_simpleShader.bind();
+	
+	//Bind the transform
+	m_simpleShader.bindUniform("ProjectionViewModel", _pvm);*/
+
+	// Draw the quad using the Mesh's draw
+	m_cylinderMesh.Draw();
+}
+
 
 bool GraphicsApp::BunnyLoader()
 {
