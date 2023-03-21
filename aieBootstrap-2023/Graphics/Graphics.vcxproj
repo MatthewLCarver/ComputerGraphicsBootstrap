@@ -168,6 +168,8 @@
   <ItemGroup>
     <ClCompile Include="BaseCamera.cpp" />
     <ClCompile Include="FlyCamera.cpp" />
+    <ClCompile Include="Instance.cpp" />
+    <ClCompile Include="Scene.cpp" />
     <ClCompile Include="SimpleCamera.cpp" />
     <ClCompile Include="GraphicsApp.cpp" />
     <ClCompile Include="main.cpp" />
@@ -181,6 +183,8 @@
   <ItemGroup>
     <ClInclude Include="BaseCamera.h" />
     <ClInclude Include="FlyCamera.h" />
+    <ClInclude Include="Instance.h" />
+    <ClInclude Include="Scene.h" />
     <ClInclude Include="SimpleCamera.h" />
     <ClInclude Include="GraphicsApp.h" />
     <ClInclude Include="Mesh.h" />
