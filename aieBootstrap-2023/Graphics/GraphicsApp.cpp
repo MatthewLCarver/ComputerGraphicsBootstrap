@@ -28,12 +28,26 @@ bool GraphicsApp::Startup() {
 	Gizmos::create(10000, 10000, 10000, 10000);
 	
 	// create simple camera transforms
-	m_viewMatrix = glm::lookAt(vec3(10), vec3(0), vec3(0, 1, 0));
-	m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f, 16.0f / 9.0f, 0.1f, 1000.0f);
+	m_viewMatrix =
+		glm::lookAt(vec3(10), vec3(0), vec3(0, 1, 0));
+	m_projectionMatrix =
+		glm::perspective(glm::pi<float>() * 0.25f, 16.0f / 9.0f, 0.1f, 1000.0f);
 	
 	m_cameraPosition = glm::vec3(glm::inverse(m_viewMatrix)[3]);
 	m_light.color = glm::vec3(1, 1, 1);
 	m_ambientLight = glm::vec3(0.25f, 0.25f, 0.25f);
+	
+	m_light.direction = glm::vec3(1, -1, 1);
+	
+	
+	m_scene = new Scene(&m_flyCamera,
+		glm::vec2(getWindowWidth(), getWindowHeight()),
+			   m_light, m_ambientLight);
+
+	/*m_scene->AddPointLights(glm::vec3(5, 3, 0), glm::vec3(1, 0, 0), 50.0f);
+	m_scene->AddPointLights(glm::vec3(-5, 3, 0), glm::vec3(0, 1, 0), 50.0f);
+	m_scene->AddPointLights(glm::vec3(5, -3, 0), glm::vec3(0, 0, 1), 50.0f);
+	*/
 	
 	//m_solarSystem = new SolarSystem();
 	
@@ -44,6 +58,36 @@ void GraphicsApp::Shutdown()
 {
 	Gizmos::destroy();
 	delete m_scene;
+}
+
+void GraphicsApp::UpdateCamera(float _deltaTime)
+{
+	switch(m_scene->GetActiveCameraType())
+	{
+		case(FLY):
+			m_flyCamera.Update(_deltaTime);
+			break;
+
+		/*case(STATIONARY):
+			m_sCamera1.Update(_deltaTime);
+			break;*/
+
+		case(ORBITAL):
+			m_orbitalCamera.Update(_deltaTime);
+			break;
+
+		default:
+			break;
+	}
+}
+
+void GraphicsApp::UpdateWeapons()
+{
+	if(m_drawSwords == m_previousDrawSwords)
+		return;
+
+	m_previousDrawSwords = m_drawSwords;
+	LoadWeaponMesh();
 }
 
 void GraphicsApp::Update(float _deltaTime) {
@@ -80,7 +124,13 @@ void GraphicsApp::Update(float _deltaTime) {
 	// Rotate the light to emulate a 'day/night' cycle
 	m_light.direction = glm::normalize(glm::vec3(1, glm::sin(time) * 1.5f, glm::cos(time) * 1.5f));
 
-	m_flyCamera.Update(_deltaTime);
+	UpdateCamera(_deltaTime);
+	UpdateWeapons();
+
+	if(input->isKeyDown(aie::INPUT_KEY_1))
+		m_sCamera1.SetRotation(glm::vec3(20, 0, 0));
+	if(input->isKeyDown(aie::INPUT_KEY_2))
+		m_sCamera1.SetRotation(glm::vec3(0, 0, 0));
 
 	if (input->isKeyDown(aie::INPUT_KEY_ESCAPE))
 		quit();
@@ -98,10 +148,7 @@ void GraphicsApp::draw() {
 	*/
 
 	// create simple camera transforms
-	m_viewMatrix = m_flyCamera.GetViewMatrix();
-	//glm::lookAt(vec3(10), vec3(0), vec3(0, 1, 0));
-	//m_projectionMatrix = m_flyCamera.GetProjectionMatrix(getWindowWidth(), getWindowHeight());
-	m_projectionMatrix = m_flyCamera.GetProjectionMatrix();
+	CameraTransforms();
 	
 	auto pv = m_projectionMatrix * m_viewMatrix;
 
@@ -129,6 +176,59 @@ void GraphicsApp::draw() {
 
 }
 
+void GraphicsApp::CameraTransforms()
+{
+	switch(m_scene->GetActiveCameraType())
+	{
+	case(FLY):
+		m_viewMatrix = m_flyCamera.GetViewMatrix();
+		m_projectionMatrix = m_flyCamera.GetProjectionMatrix();
+		break;
+
+		case(STATIONARY):
+			m_viewMatrix = m_sCamera1.GetViewMatrix();
+			m_projectionMatrix = m_sCamera1.GetProjectionMatrix();
+			break;
+
+		case(ORBITAL):
+			m_viewMatrix = m_orbitalCamera.GetViewMatrix();
+			m_projectionMatrix = m_orbitalCamera.GetProjectionMatrix();
+		break;
+
+	default:
+		break;
+	}
+	
+	
+}
+
+void GraphicsApp::LoadWeaponMesh()
+{
+	if(m_scene->GetInstances().size() > 0)
+	{
+		m_scene->ClearInstances();
+	}
+	
+	if(!m_drawSwords)
+	{
+		for(int i = 0; i < 10; i++)
+		{
+			m_scene->AddInstance(new Instance(glm::vec3 (i * 2, 0, 0),
+				glm::vec3(0, i * 30, 0), glm::vec3(1,1,1),
+				&m_spearMesh, &m_normalLitShader));
+		}
+	}
+	else
+	{
+		for(int i = 0; i < 10; i++)
+		{
+			m_scene->AddInstance(new Instance(glm::vec3 (i * 2, 3, 0),
+				glm::vec3(0, i * 30, 0), glm::vec3(.3f,.3f,.3f),
+				&m_swordMesh, &m_normalLitShader));
+		}
+	}
+}
+
 bool GraphicsApp::LaunchShaders()
 {
 	glEnable(GL_BLEND);
@@ -139,7 +239,7 @@ bool GraphicsApp::LaunchShaders()
 	
 	if (m_normalLitShader.link() == false)
 	{
-		printf("Normal Lit Phong has an Error: %s\n", m_texturedShader.getLastError());
+		printf("Normal Lit Phong has an Error: %s\n", m_normalLitShader.getLastError());
 		return false;
 	}
 	if(!QuadTextureLoader())
@@ -158,16 +258,10 @@ bool GraphicsApp::LaunchShaders()
 		return false;
 	if(!SwordLoader())
 		return false;
-	
-	Light light;
-	light.color = glm::vec3(1, 1, 1);
-	
-	m_scene = new Scene(&m_flyCamera, glm::vec2(getWindowWidth(), getWindowHeight()),
-	light, m_ambientLight);
 
-	m_scene->AddInstance(new Instance(m_spearTransform, &m_spearMesh, &m_normalLitShader));
-	m_scene->AddInstance(new Instance(m_swordTransform, &m_swordMesh, &m_normalLitShader));
+	LoadWeaponMesh();
 	
+
 	return true;
 }
 
@@ -176,6 +270,11 @@ void GraphicsApp::ImGUIRefresher()
 	ImGui::Begin("Light Settings");
 	ImGui::DragFloat3("Global Light Color", &m_light.color[0], 0.01f, 0.0f, 1.0f);
 	ImGui::DragFloat3("Global Light Direction", &m_light.direction[0], 0.01f, -1.0f, 1.0f);
+
+	if(!m_drawSwords)
+		ImGui::Checkbox("Draw Swords", &m_drawSwords);
+	else
+		ImGui::Checkbox("Draw Spears", &m_drawSwords);
 	ImGui::End();
 }
 
@@ -452,11 +551,6 @@ bool GraphicsApp::IcosahedronLoader()
 		indices[i * 6 + 35] = (i + 1) % 5 + 6;
 	}
 	
-
-
-	
-
-	// initialise the icosahedron
 	m_icosahedronMesh.Initialise(12, vertices, 60, indices);
 	
 	m_icosahedronTransform = {
@@ -522,7 +616,6 @@ bool GraphicsApp::BunnyLoader()
 		printf("Bunny Mesh Error!\n");
 		return false;
 	}
-
 
 	m_bunnyTransform = {
 		0.75f,  0,  0, 0,
@@ -640,9 +733,6 @@ void GraphicsApp::SwordDraw(glm::mat4 _pvm, glm::mat4 _transform)
 	
 	// Bind the transform using the model matrix
 	m_phongShader.bindUniform("ModelMatrix", _transform);
-
-	
-
 	
 	m_normalLitShader.bindUniform("normalTexture", 0);
 	
@@ -653,7 +743,7 @@ void GraphicsApp::SwordDraw(glm::mat4 _pvm, glm::mat4 _transform)
 	// Rotates the transform
 	m_swordTransform = glm::rotate(m_swordTransform, m_rotationRate, glm::vec3(0, 1, 0));
 
-	// Draw the bunny
+	// Draw the sword
 	m_swordMesh.draw();
 }
 
@@ -729,9 +819,6 @@ void GraphicsApp::ObjDraw(glm::mat4 _pv, glm::mat4 _transform, aie::OBJMesh* _me
 
 	// Bind the transform using the model matrix
 	m_normalLitShader.bindUniform("ModelMatrix", _transform);
-
-	
-
 	
 	/*//m_normalLitShader.bindUniform("normalTexture", 0);
 	
@@ -742,7 +829,7 @@ void GraphicsApp::ObjDraw(glm::mat4 _pv, glm::mat4 _transform, aie::OBJMesh* _me
 	// Rotates the transform
 	_transform = glm::rotate(_transform, m_rotationRate, glm::vec3(0, 1, 0));
 
-	// Draw the bunny
+	// Draw the mesh
 	_mesh->draw();
 }
 

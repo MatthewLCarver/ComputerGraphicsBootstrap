@@ -51,8 +51,8 @@ void FlyCamera::Update(float _deltaTime)
 
     if(input->isMouseButtonDown(aie::INPUT_MOUSE_BUTTON_RIGHT))
     {
-        m_theta += m_speed * (mousePosition.x - m_lastMouse.x) * _deltaTime;
-        m_phi += m_speed * (mousePosition.y - m_lastMouse.y) * _deltaTime;
+        m_theta += m_speed * 10 * (mousePosition.x - m_lastMouse.x) * _deltaTime;
+        m_phi += m_speed * 10 * (mousePosition.y - m_lastMouse.y) * _deltaTime;
     }
     
     m_lastMouse = mousePosition;

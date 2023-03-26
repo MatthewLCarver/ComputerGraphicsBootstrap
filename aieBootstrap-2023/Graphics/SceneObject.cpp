@@ -28,7 +28,6 @@ SceneObject::~SceneObject()
 
 void SceneObject::Update(float _deltaTime)
 {
-    
     m_rotation += _deltaTime * m_speed;
     m_transform = glm::rotate(glm::mat4x4(1.0f), m_rotation, glm::vec3(0, 1, 0));
     m_transform = glm::translate(m_transform, glm::vec3(m_distance, 0, 0));

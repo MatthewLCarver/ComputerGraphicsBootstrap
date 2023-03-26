@@ -13,7 +13,9 @@
 #include <glm/mat4x4.hpp>
 
 
+#include "OrbitalCamera.h"
 #include "SolarSystem.h"
+#include "StationaryCamera.h"
 
 class GraphicsApp : public aie::Application {
 public:
@@ -24,11 +26,17 @@ public:
 	virtual bool Startup();
 	virtual void Shutdown();
 
-	virtual void Update(float deltaTime);
+	void UpdateCamera(float _deltaTime);
+	void UpdateWeapons();
+	
+	virtual void Update(float _deltaTime);
+	
 	virtual void draw();
 
+	void CameraTransforms();
+	
 protected:
-
+	void LoadWeaponMesh();
 	bool LaunchShaders();
 	void ImGUIRefresher();
 	
@@ -130,13 +138,11 @@ protected:
 
 	SimpleCamera		m_camera;
 	FlyCamera			m_flyCamera;
+	StationaryCamera	m_sCamera1;
+	StationaryCamera	m_sCamera2;
+	StationaryCamera	m_sCamera3;
+	OrbitalCamera		m_orbitalCamera;
 	
-	/*struct Light
-	{
-		glm::vec3 direction;
-		glm::vec3 color;
-	};*/
-
 	Light m_light;
 	glm::vec3 m_ambientLight;
 
@@ -144,6 +150,9 @@ protected:
 
 	float m_rotationRate = 0.0f;
 	
+
 private:
 	SolarSystem* m_solarSystem = nullptr;
+	bool m_drawSwords = false;
+	bool m_previousDrawSwords = false;
 };
