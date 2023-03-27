@@ -10,7 +10,6 @@ OrbitalCamera::OrbitalCamera()
 
 void OrbitalCamera::Update(float _deltaTime)
 {
-    // orbit around the target transform at a distance of m_distanceToTarget
     m_theta += _deltaTime * m_orbitalSpeed;
     m_position.x = m_distanceToTarget * cos(m_theta);
     m_position.z = m_distanceToTarget * sin(m_theta);
@@ -20,6 +19,8 @@ void OrbitalCamera::Update(float _deltaTime)
     glm::vec3 direction = glm::normalize(targetPosition - m_position);
     m_phi = asin(direction.y);
     m_theta = atan2(direction.z, direction.x);
+    
+    SetViewMatrix(m_position, direction, glm::vec3(0, 1, 0));
 }
 
 void OrbitalCamera::SetTarget(glm::mat4 _transform, float _distanceToTarget)

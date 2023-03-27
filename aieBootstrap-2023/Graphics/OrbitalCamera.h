@@ -13,6 +13,6 @@ public:
 
 private:
     float m_distanceToTarget = 10.0f;
-    float m_orbitalSpeed = 5.0f;
+    float m_orbitalSpeed = 0.5f;
     glm::mat4 m_targetTransform;
 };

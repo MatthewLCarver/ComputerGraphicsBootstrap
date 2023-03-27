@@ -1,4 +1,4 @@
-// Out phong shader with lighting and textures
+// Our phong shader with lighting and textures
 #version 410
 
 in vec4 vPosition;
@@ -45,6 +45,18 @@ vec3 Specular(vec3 direction, vec3 color, vec3 normal, vec3 view)
     return specularTerm * color;
 }
 
+bool CheckTextures()
+{
+    // check if the textures are valid
+    vec3 texDiffuseCol = texture2D(diffuseTexture, vTexCoord).rgb;
+    if(length(texDiffuseCol) == 0.0)
+    {
+        return false;
+    }
+    
+    return true;
+}
+
 void main()
 {
     // Set the normal and light direction
@@ -55,11 +67,12 @@ void main()
 
     mat3 TBN = mat3(T,B,N);
 
+
     vec3 texDiffuse = texture(diffuseTexture, vTexCoord).rgb;
     vec3 texSpecular = texture(specularTexture, vTexCoord).rgb;
     vec3 texNormal = texture(normalTexture, vTexCoord).rgb;
-
-    N = TBN * (texNormal * 2 - 1);
+    
+    N = normalize(TBN * (texNormal * 2 - 1));
 
     // Calculate the negative light direction (Lambert Term)
     float lambertTerm = max(0, min(1, dot(N, -L)));

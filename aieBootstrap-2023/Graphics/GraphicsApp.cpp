@@ -38,16 +38,17 @@ bool GraphicsApp::Startup() {
 	m_ambientLight = glm::vec3(0.25f, 0.25f, 0.25f);
 	
 	m_light.direction = glm::vec3(1, -1, 1);
-	
+
+	m_orbitalCamera.SetTarget(glm::mat4(1), 10);
 	
 	m_scene = new Scene(&m_flyCamera,
 		glm::vec2(getWindowWidth(), getWindowHeight()),
 			   m_light, m_ambientLight);
 
-	/*m_scene->AddPointLights(glm::vec3(5, 3, 0), glm::vec3(1, 0, 0), 50.0f);
-	m_scene->AddPointLights(glm::vec3(-5, 3, 0), glm::vec3(0, 1, 0), 50.0f);
-	m_scene->AddPointLights(glm::vec3(5, -3, 0), glm::vec3(0, 0, 1), 50.0f);
-	*/
+	m_scene->AddPointLights(glm::vec3(5, 3, 0), glm::vec3(0, 1, 1), 1.0f);
+	//m_scene->AddPointLights(glm::vec3(-5, 3, 0), glm::vec3(0, .5f, 0), 50.0f);
+	//m_scene->AddPointLights(glm::vec3(3, -5, 0), glm::vec3(0, 0, 1), 500.0f);
+	
 	
 	//m_solarSystem = new SolarSystem();
 	
@@ -60,35 +61,6 @@ void GraphicsApp::Shutdown()
 	delete m_scene;
 }
 
-void GraphicsApp::UpdateCamera(float _deltaTime)
-{
-	switch(m_scene->GetActiveCameraType())
-	{
-		case(FLY):
-			m_flyCamera.Update(_deltaTime);
-			break;
-
-		/*case(STATIONARY):
-			m_sCamera1.Update(_deltaTime);
-			break;*/
-
-		case(ORBITAL):
-			m_orbitalCamera.Update(_deltaTime);
-			break;
-
-		default:
-			break;
-	}
-}
-
-void GraphicsApp::UpdateWeapons()
-{
-	if(m_drawSwords == m_previousDrawSwords)
-		return;
-
-	m_previousDrawSwords = m_drawSwords;
-	LoadWeaponMesh();
-}
 
 void GraphicsApp::Update(float _deltaTime) {
 
@@ -118,19 +90,21 @@ void GraphicsApp::Update(float _deltaTime) {
 	// Grab the time since the application has started
 	float time = getTime();
 
-	// use the time to add to the rotation rate variable (in radians)
+	/*// use the time to add to the rotation rate variable (in radians)
 	m_rotationRate = .002f;
 	
 	// Rotate the light to emulate a 'day/night' cycle
-	m_light.direction = glm::normalize(glm::vec3(1, glm::sin(time) * 1.5f, glm::cos(time) * 1.5f));
+	m_light.direction = glm::normalize(glm::vec3(1, glm::sin(time) * 1.5f, glm::cos(time) * 1.5f));*/
 
+	m_scene->Update(time);
+	
 	UpdateCamera(_deltaTime);
 	UpdateWeapons();
 
 	if(input->isKeyDown(aie::INPUT_KEY_1))
-		m_sCamera1.SetRotation(glm::vec3(20, 0, 0));
+		m_sCameraX.SetRotation(glm::vec3(20, 0, 0));
 	if(input->isKeyDown(aie::INPUT_KEY_2))
-		m_sCamera1.SetRotation(glm::vec3(0, 0, 0));
+		m_sCameraX.SetRotation(glm::vec3(0, 0, 0));
 
 	if (input->isKeyDown(aie::INPUT_KEY_ESCAPE))
 		quit();
@@ -138,8 +112,49 @@ void GraphicsApp::Update(float _deltaTime) {
 	ImGUIRefresher();
 }
 
-void GraphicsApp::draw() {
+void GraphicsApp::UpdateCamera(float _deltaTime)
+{
+	switch(m_scene->GetActiveCameraType())
+	{
+	case(FLY):
+		m_flyCamera.Update(_deltaTime);
+		break;
 
+		/*case(STATIONARY):
+			switch(m_currentSCamera)
+			{
+				case 0:
+					break;
+				case 1:
+					break;
+				case 2:
+					break;
+			}
+			break;*/
+
+		case(ORBITAL):
+			m_orbitalCamera.Update(_deltaTime);
+		break;
+
+	default:
+		break;
+	}
+}
+
+void GraphicsApp::UpdateWeapons()
+{
+	if(m_drawSwords == m_previousDrawSwords)
+		return;
+
+	m_previousDrawSwords = m_drawSwords;
+	LoadWeaponMesh();
+}
+
+
+void GraphicsApp::draw() {
+	// Bind the render target as the first part of our draw function
+	m_renderTarget.bind();
+	
 	// wipe the screen to the background colour
 	clearScreen();
 
@@ -151,11 +166,28 @@ void GraphicsApp::draw() {
 	CameraTransforms();
 	
 	auto pv = m_projectionMatrix * m_viewMatrix;
-
-	m_scene->Draw();
 	
-	//QuadDraw(pv * m_quadTransform);
-	QuadTextureDraw(pv * m_quadTransform);
+	m_scene->Draw();
+
+	Gizmos::draw(m_projectionMatrix * m_viewMatrix);
+
+	// Unbind the render target to return to the back buffer
+	m_renderTarget.unbind();
+
+	clearScreen();
+	
+	//QuadTextureDraw(pv * m_quadTransform);
+	m_scene->Draw();
+
+	// Bind the post process shader and the texture
+	m_postProcessShader.bind();
+	m_postProcessShader.bindUniform("colorTarget", 0);
+	m_postProcessShader.bindUniform("postProcessTarget", 1);
+	m_renderTarget.getTarget(0).bind(0);
+
+	m_fullscreenQuadMesh.Draw();
+	
+	/*//QuadDraw(pv * m_quadTransform);
 	//IcosahedronDraw(pv * m_icosahedronTransform, m_icosahedronTransform);
 	//SpearDraw(pv * m_spearTransform, m_spearTransform);
 	//SwordDraw(pv * m_swordTransform, m_swordTransform);
@@ -166,13 +198,13 @@ void GraphicsApp::draw() {
 	//PhongDraw(pv * m_bunnyTransform, m_bunnyTransform);
 
 	//BoxDraw(pv * m_boxTransform, m_boxTransform);
-	//CylinderDraw(pv * m_cylinderTransform, m_cylinderTransform);
+	//CylinderDraw(pv * m_cylinderTransform, m_cylinderTransform);*/
 
 	//m_solarSystem->Draw();
 
 	
 	
-	Gizmos::draw(m_projectionMatrix * m_viewMatrix);
+	
 
 }
 
@@ -186,8 +218,23 @@ void GraphicsApp::CameraTransforms()
 		break;
 
 		case(STATIONARY):
-			m_viewMatrix = m_sCamera1.GetViewMatrix();
-			m_projectionMatrix = m_sCamera1.GetProjectionMatrix();
+
+			switch(m_currentSCamera)
+			{
+				case 0:
+					m_viewMatrix = m_sCameraX.GetViewMatrix();
+					m_projectionMatrix = m_sCameraX.GetProjectionMatrix();
+					break;
+				case 1:
+					m_viewMatrix = m_sCameraY.GetViewMatrix();
+					m_projectionMatrix = m_sCameraY.GetProjectionMatrix();
+					break;
+				case 2:
+					m_viewMatrix = m_sCameraZ.GetViewMatrix();
+					m_projectionMatrix = m_sCameraZ.GetProjectionMatrix();
+					break;
+			}
+		
 			break;
 
 		case(ORBITAL):
@@ -208,32 +255,50 @@ void GraphicsApp::LoadWeaponMesh()
 	{
 		m_scene->ClearInstances();
 	}
-	
-	if(!m_drawSwords)
+
+	switch(m_objectToDraw)
 	{
+	case SPEARS:
 		for(int i = 0; i < 10; i++)
 		{
-			m_scene->AddInstance(new Instance(glm::vec3 (i * 2, 0, 0),
+			m_scene->AddInstance(new Instance(glm::vec3 (i * 2, 0.25f, 0),
 				glm::vec3(0, i * 30, 0), glm::vec3(1,1,1),
 				&m_spearMesh, &m_normalLitShader));
 		}
-	}
-	else
-	{
+		break;
+	case SWORDS:
 		for(int i = 0; i < 10; i++)
 		{
 			m_scene->AddInstance(new Instance(glm::vec3 (i * 2, 3, 0),
-				glm::vec3(0, i * 30, 0), glm::vec3(.3f,.3f,.3f),
+				glm::vec3(0, i * 30, 0), glm::vec3(.2f,.2f,.2f),
 				&m_swordMesh, &m_normalLitShader));
 		}
+		break;
+	case DRAGONS:
+		for(int i = 0; i < 10; i++)
+		{
+			m_scene->AddInstance(new Instance(glm::vec3 (i * 2, 0.5f, 0),
+				glm::vec3(0, i * 30, 0), glm::vec3(.15f,.15f,.15f),
+				&m_dragonMesh, &m_litPhongShader));
+		}
+		break;
 	}
 }
 
 bool GraphicsApp::LaunchShaders()
 {
+#pragma region RenderTarget
+	if(m_renderTarget.initialise(1, getWindowWidth(), getWindowHeight())
+		== false)
+	{
+		printf("Render Target Error\n");
+		return false;
+	}
+	
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-	
+
+	// Normal Lit Phong Shader
 	m_normalLitShader.loadShader(aie::eShaderStage::VERTEX, "./shaders/normalLit.vert");
 	m_normalLitShader.loadShader(aie::eShaderStage::FRAGMENT, "./shaders/normalLit.frag");
 	
@@ -242,8 +307,34 @@ bool GraphicsApp::LaunchShaders()
 		printf("Normal Lit Phong has an Error: %s\n", m_normalLitShader.getLastError());
 		return false;
 	}
+
+	// Lit Phong Shader
+	m_litPhongShader.loadShader(aie::eShaderStage::VERTEX, "./shaders/litPhong.vert");
+	m_litPhongShader.loadShader(aie::eShaderStage::FRAGMENT, "./shaders/litPhong.frag");
+	
+	if (m_litPhongShader.link() == false)
+	{
+		printf("Lit Phong has an Error: %s\n", m_litPhongShader.getLastError());
+		return false;
+	}
+
+	// Post Processing Shader
+	m_postProcessShader.loadShader(aie::eShaderStage::VERTEX, "./shaders/post.vert");
+	m_postProcessShader.loadShader(aie::eShaderStage::FRAGMENT, "./shaders/post.frag");
+	
+	if (m_postProcessShader.link() == false)
+	{
+		printf("Post Process has an Error: %s\n", m_postProcessShader.getLastError());
+		return false;
+	}
+
+	
+	
 	if(!QuadTextureLoader())
 		return false;
+	// Create a full screen quad
+	m_fullscreenQuadMesh.InitialiseFullscreenQuad();
+	
 	/*if(!IcosahedronLoader())
 		return false;
 	*/
@@ -253,28 +344,77 @@ bool GraphicsApp::LaunchShaders()
 	//	return false;
 	/*if(!BunnyLoader())
 		return false;*/
+
 	
 	if(!SpearLoader())
 		return false;
 	if(!SwordLoader())
 		return false;
+	if(!DragonLoader())
+		return false;
 
 	LoadWeaponMesh();
 	
-
 	return true;
 }
 
 void GraphicsApp::ImGUIRefresher()
 {
-	ImGui::Begin("Light Settings");
+	ImGui::Begin("Computer Graphics Test Settings");
+	
 	ImGui::DragFloat3("Global Light Color", &m_light.color[0], 0.01f, 0.0f, 1.0f);
 	ImGui::DragFloat3("Global Light Direction", &m_light.direction[0], 0.01f, -1.0f, 1.0f);
+	ImGui::Separator();
 
-	if(!m_drawSwords)
-		ImGui::Checkbox("Draw Swords", &m_drawSwords);
-	else
-		ImGui::Checkbox("Draw Spears", &m_drawSwords);
+	if(ImGui::Button("Spears", ImVec2(100, 50)))
+	{
+		m_objectToDraw = SPEARS;
+		LoadWeaponMesh();
+	}
+	ImGui::SameLine();
+	if(ImGui::Button("Swords", ImVec2(100, 50)))
+	{
+		m_objectToDraw = SWORDS;
+		LoadWeaponMesh();
+	}
+	ImGui::SameLine();
+	if(ImGui::Button("Dragons", ImVec2(100, 50)))
+	{
+		m_objectToDraw = DRAGONS;
+		LoadWeaponMesh();
+	}
+	ImGui::Separator();
+
+	ImGui::Text("Dynamic Cameras");
+	if(ImGui::Button("Fly Camera"))
+	{
+		m_scene->SetCamera(FLY, &m_flyCamera);
+	}
+	ImGui::SameLine();
+	if(ImGui::Button("Orbital Camera"))
+	{
+		m_scene->SetCamera(ORBITAL, &m_orbitalCamera);
+	}
+	ImGui::Text("Static Cameras");
+	if(ImGui::Button("X Camera"))
+	{
+		m_currentSCamera = 0;
+		m_scene->SetCamera(STATIONARY, &m_sCameraX);
+	}
+	ImGui::SameLine();
+	if(ImGui::Button("Y Camera"))
+	{
+		m_currentSCamera = 1;
+		m_scene->SetCamera(STATIONARY, &m_sCameraY);
+	}
+	ImGui::SameLine();
+	if(ImGui::Button("Z Camera"))
+	{
+		m_currentSCamera = 2;
+		m_scene->SetCamera(STATIONARY, &m_sCameraZ);
+	}
+
+	ImGui::Spacing();
 	ImGui::End();
 }
 
@@ -644,14 +784,14 @@ void GraphicsApp::BunnyDraw(glm::mat4 _pvm)
 
 bool GraphicsApp::SpearLoader()
 {
-	m_texturedShader.loadShader(aie::eShaderStage::VERTEX, "./shaders/textured.vert");
-	m_texturedShader.loadShader(aie::eShaderStage::FRAGMENT, "./shaders/textured.frag");
+	/*m_texturedShader.loadShader(aie::eShaderStage::VERTEX, "./shaders/normalLit.vert");
+	m_texturedShader.loadShader(aie::eShaderStage::FRAGMENT, "./shaders/NormalLit.frag");
 	
 	if (m_texturedShader.link() == false)
 	{
 		printf("Color Shader has an Error: %s\n", m_texturedShader.getLastError());
 		return false;
-	}
+	}*/
 
 	if(m_spearMesh.load("./soulspear/soulspear.obj", true, true) == false)
 	{
@@ -660,9 +800,9 @@ bool GraphicsApp::SpearLoader()
 	}
 
 	m_spearTransform = {
-		0.75f,  0,  0, 0,
-		0,  0.75f,  0, 0,
-		0,  0,  0.75f, 0,
+		1,  0,  0, 0,
+		0,  1,  0, 0,
+		0,  0,  1, 0,
 		0,  0,  0, 1
 	};
 
@@ -705,7 +845,7 @@ bool GraphicsApp::SwordLoader()
 		0,  0,  0, 1
 	};
 
-	m_swordTransform = glm::translate(m_swordTransform, glm::vec3(15.0f, 13.0f, 0.0f));
+	//m_swordTransform = glm::translate(m_swordTransform, glm::vec3(15.0f, 13.0f, 0.0f));
 
 	return true;
 }
@@ -746,6 +886,26 @@ void GraphicsApp::SwordDraw(glm::mat4 _pvm, glm::mat4 _transform)
 	// Draw the sword
 	m_swordMesh.draw();
 }
+
+bool GraphicsApp::DragonLoader()
+{
+	if(m_dragonMesh.load("./stanford/Dragon.obj", true, true) == false)
+	{
+		printf("Dragon Mesh Error!\n");
+		return false;
+	}
+
+	m_dragonTransform = {
+		0.75f,  0,  0, 0,
+		0,  0.75f,  0, 0,
+		0,  0,  0.75f, 0,
+		0,  0,  0, 1
+	};
+
+	return true;
+}
+
+
 
 bool GraphicsApp::QuadTextureLoader()
 {
@@ -791,7 +951,8 @@ void GraphicsApp::QuadTextureDraw(glm::mat4 _pvm)
 	m_texturedShader.bindUniform("diffuseTexture", 0);
 
 	// Bind the texture to a specific location
-	m_gridTexture.bind(0);
+	//m_gridTexture.bind(0);
+	m_renderTarget.getTarget(0).bind(0);
 
 	// Draw the quad using the Mesh's draw
 	m_quadMesh.Draw();

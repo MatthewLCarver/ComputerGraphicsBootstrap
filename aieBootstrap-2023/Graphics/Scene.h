@@ -83,6 +83,8 @@ public:
         m_camera = _camera;
     }
 
+    void Update(float _deltatime);
+
     void ClearInstances();
 
 protected:
@@ -94,10 +96,12 @@ protected:
     Light m_light;
     glm::vec3 m_ambientLightColor;
     std::list<Instance*> m_instances;
-    ActiveCameraType m_activeCameraType = ORBITAL;
+    ActiveCameraType m_activeCameraType = FLY;
 
     glm::vec3 m_pointLightPositions[MAX_LIGHTS];
     glm::vec3 m_pointLightColors[MAX_LIGHTS];
+
+    float m_rotationRate = 0.002f;
 };
 
 

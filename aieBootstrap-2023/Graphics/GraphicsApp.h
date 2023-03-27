@@ -8,6 +8,7 @@
 #include "SimpleCamera.h"
 #include "Scene.h"
 #include "Instance.h"
+#include "RenderTarget.h"
 
 #include <imgui.h>
 #include <glm/mat4x4.hpp>
@@ -16,6 +17,13 @@
 #include "OrbitalCamera.h"
 #include "SolarSystem.h"
 #include "StationaryCamera.h"
+
+enum ObjectToDraw
+{
+	SPEARS,
+	SWORDS,
+	DRAGONS
+};
 
 class GraphicsApp : public aie::Application {
 public:
@@ -80,6 +88,8 @@ protected:
 	bool SwordLoader();
 	void SwordDraw(glm::mat4 _pvm, glm::mat4 _transform);
 
+	bool DragonLoader();
+
 	bool QuadTextureLoader();
 	void QuadTextureDraw(glm::mat4 _pvm);
 
@@ -88,6 +98,8 @@ protected:
 		glm::mat4 _transform, aie::OBJMesh* _mesh);
 	
 	void PhongDraw(glm::mat4 _pvm, glm::mat4 _transform);
+
+	int m_postProcessEffect = -1;
 
 	Scene*				m_scene;
 	
@@ -106,10 +118,15 @@ protected:
 	aie::ShaderProgram	m_simpleShader;
 	aie::ShaderProgram	m_colorShader;
 	aie::ShaderProgram	m_phongShader;
+	aie::ShaderProgram	m_litPhongShader;
 	aie::ShaderProgram	m_texturedShader;
 	aie::ShaderProgram	m_normalLitShader;
+	aie::ShaderProgram	m_postProcessShader;
+
+	aie::RenderTarget	m_renderTarget;
 	
 	Mesh				m_quadMesh;
+	Mesh				m_fullscreenQuadMesh;
 	glm::mat4			m_quadTransform;
 
 	Mesh				m_boxMesh;
@@ -133,14 +150,17 @@ protected:
 	aie::OBJMesh		m_swordMesh;
 	glm::mat4			m_swordTransform;
 
+	aie::OBJMesh		m_dragonMesh;
+	glm::mat4			m_dragonTransform;
+
 	aie::OBJMesh		m_r2D2Mesh;
 	glm::mat4			m_r2D2Transform;
 
 	SimpleCamera		m_camera;
 	FlyCamera			m_flyCamera;
-	StationaryCamera	m_sCamera1;
-	StationaryCamera	m_sCamera2;
-	StationaryCamera	m_sCamera3;
+	StationaryCamera	m_sCameraX = StationaryCamera(glm::vec3(0, 1, -20), glm::vec3(90, 0, 0));
+	StationaryCamera	m_sCameraY = StationaryCamera(glm::vec3(0, 30, 0), glm::vec3(0, 270, 0));
+	StationaryCamera	m_sCameraZ = StationaryCamera(glm::vec3(-10, 1, 0), glm::vec3(0, 0, 0));
 	OrbitalCamera		m_orbitalCamera;
 	
 	Light m_light;
@@ -155,4 +175,7 @@ private:
 	SolarSystem* m_solarSystem = nullptr;
 	bool m_drawSwords = false;
 	bool m_previousDrawSwords = false;
+	int m_currentSCamera = 0;
+
+	ObjectToDraw m_objectToDraw = SPEARS;
 };

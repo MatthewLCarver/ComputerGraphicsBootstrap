@@ -1,11 +1,13 @@
 ﻿#include "StationaryCamera.h"
 
-StationaryCamera::StationaryCamera()
+
+
+StationaryCamera::StationaryCamera(glm::vec3 _position, glm::vec3 _rotation)
 {
-    m_position = glm::vec3(-10, 2, 0);
+    m_position = _position;
     m_aspectRatio = 16.0f / 9.0f;
-    m_theta = 0;
-    m_phi = 0;
+
+    SetRotation(_rotation);
 }
 
 void StationaryCamera::SetRotation(glm::vec3 _rotation)

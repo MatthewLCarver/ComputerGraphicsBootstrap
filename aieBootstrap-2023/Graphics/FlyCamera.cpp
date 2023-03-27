@@ -42,23 +42,23 @@ void FlyCamera::Update(float _deltaTime)
         m_position += right * m_speed * _deltaTime;
 
     if(input->isKeyDown(aie::INPUT_KEY_Q))
-        m_position += up * m_speed * _deltaTime;
-    if(input->isKeyDown(aie::INPUT_KEY_E))
         m_position -= up * m_speed * _deltaTime;
+    if(input->isKeyDown(aie::INPUT_KEY_E))
+        m_position += up * m_speed * _deltaTime;
 
     // Get the mouse coordinates
     glm::vec2 mousePosition = glm::vec2(input->getMouseX(), input->getMouseY());
 
     if(input->isMouseButtonDown(aie::INPUT_MOUSE_BUTTON_RIGHT))
     {
-        m_theta += m_speed * 10 * (mousePosition.x - m_lastMouse.x) * _deltaTime;
-        m_phi += m_speed * 10 * (mousePosition.y - m_lastMouse.y) * _deltaTime;
+        m_theta += m_speed * (mousePosition.x - m_lastMouse.x) * _deltaTime;
+        m_phi += m_speed * (mousePosition.y - m_lastMouse.y) * _deltaTime;
     }
     
     m_lastMouse = mousePosition;
 
     // Hold left shift to boost speed
-    SetSpeed(input->isKeyDown(aie::INPUT_KEY_LEFT_SHIFT) ? 10.0f : 5.0f);
+    SetSpeed(input->isKeyDown(aie::INPUT_KEY_LEFT_SHIFT) ? 15.0f : 5.0f);
 }
 
 void FlyCamera::SetSpeed(float _speed)

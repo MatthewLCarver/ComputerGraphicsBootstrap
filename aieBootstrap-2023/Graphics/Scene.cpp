@@ -42,6 +42,12 @@ void Scene::RemoveInstance(Instance* _instance)
     m_instances.remove(_instance);
 }
 
+void Scene::Update(float _time)
+{
+    // Rotate the light to emulate a 'day/night' cycle
+    m_light.direction = glm::normalize(glm::vec3(glm::sin(_time) * 1.5f, glm::sin(_time) * 1.5f, glm::cos(_time) * 1.5f));
+}
+
 void Scene::ClearInstances()
 {
     m_instances.clear();
