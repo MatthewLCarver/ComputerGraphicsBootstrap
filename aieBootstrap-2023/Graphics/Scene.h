@@ -86,6 +86,9 @@ public:
     void Update(float _deltatime);
 
     void ClearInstances();
+    glm::vec3 GetLightPosition()
+        { return m_light.direction; }
+
 
 protected:
     BaseCamera* m_camera;

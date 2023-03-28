@@ -59,6 +59,9 @@ void FlyCamera::Update(float _deltaTime)
 
     // Hold left shift to boost speed
     SetSpeed(input->isKeyDown(aie::INPUT_KEY_LEFT_SHIFT) ? 15.0f : 5.0f);
+
+    // Set the view matrix
+    SetViewMatrix(m_position, m_position + forward, m_up);
 }
 
 void FlyCamera::SetSpeed(float _speed)

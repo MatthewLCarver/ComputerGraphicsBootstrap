@@ -34,16 +34,24 @@ bool GraphicsApp::Startup() {
 		glm::perspective(glm::pi<float>() * 0.25f, 16.0f / 9.0f, 0.1f, 1000.0f);
 	
 	m_cameraPosition = glm::vec3(glm::inverse(m_viewMatrix)[3]);
+	
 	m_light.color = glm::vec3(1, 1, 1);
 	m_ambientLight = glm::vec3(0.25f, 0.25f, 0.25f);
 	
 	m_light.direction = glm::vec3(1, -1, 1);
+	
 
 	m_orbitalCamera.SetTarget(glm::mat4(1), 10);
 	
+	m_emitter = new ParticleEmitter();
+	m_emitter->Initialise(1000, 500, .1f, 1.0f,
+		1, 5, 1, 0.1f,
+		glm::vec4(0, 0, 1, 1), glm::vec4(0, 1, 0 ,1));
+	
+	
 	m_scene = new Scene(&m_flyCamera,
 		glm::vec2(getWindowWidth(), getWindowHeight()),
-			   m_light, m_ambientLight);
+		m_light, m_ambientLight);
 
 	m_scene->AddPointLights(glm::vec3(5, 3, 0), glm::vec3(0, 1, 1), 1.0f);
 	//m_scene->AddPointLights(glm::vec3(-5, 3, 0), glm::vec3(0, .5f, 0), 50.0f);
@@ -63,7 +71,8 @@ void GraphicsApp::Shutdown()
 
 
 void GraphicsApp::Update(float _deltaTime) {
-
+	m_dt = _deltaTime;
+	
 	// wipe the gizmos clean for this frame
 	Gizmos::clear();
 
@@ -96,15 +105,19 @@ void GraphicsApp::Update(float _deltaTime) {
 	// Rotate the light to emulate a 'day/night' cycle
 	m_light.direction = glm::normalize(glm::vec3(1, glm::sin(time) * 1.5f, glm::cos(time) * 1.5f));*/
 
+	
 	m_scene->Update(time);
+
+	// dynamic cast the camera to a base camera
+	BaseCamera* camera = m_scene->GetCamera();
+	
 	
 	UpdateCamera(_deltaTime);
 	UpdateWeapons();
 
-	if(input->isKeyDown(aie::INPUT_KEY_1))
-		m_sCameraX.SetRotation(glm::vec3(20, 0, 0));
-	if(input->isKeyDown(aie::INPUT_KEY_2))
-		m_sCameraX.SetRotation(glm::vec3(0, 0, 0));
+	m_emitter->Update(_deltaTime, camera->GetTransform(
+	camera->GetPosition(), glm::vec3(0), glm::vec3(1))
+	);
 
 	if (input->isKeyDown(aie::INPUT_KEY_ESCAPE))
 		quit();
@@ -120,17 +133,20 @@ void GraphicsApp::UpdateCamera(float _deltaTime)
 		m_flyCamera.Update(_deltaTime);
 		break;
 
-		/*case(STATIONARY):
+		case(STATIONARY):
 			switch(m_currentSCamera)
 			{
 				case 0:
+					m_sCameraX.Update(_deltaTime);
 					break;
 				case 1:
+					m_sCameraY.Update(_deltaTime);
 					break;
 				case 2:
+					m_sCameraZ.Update(_deltaTime);
 					break;
 			}
-			break;*/
+			break;
 
 		case(ORBITAL):
 			m_orbitalCamera.Update(_deltaTime);
@@ -169,6 +185,10 @@ void GraphicsApp::draw() {
 	
 	m_scene->Draw();
 
+	m_particleShader.bind();
+	m_particleShader.bindUniform("ProjectionViewModel", pv * m_particleEmitTransform);
+	m_emitter->Draw();
+	
 	Gizmos::draw(m_projectionMatrix * m_viewMatrix);
 
 	// Unbind the render target to return to the back buffer
@@ -177,12 +197,20 @@ void GraphicsApp::draw() {
 	clearScreen();
 	
 	//QuadTextureDraw(pv * m_quadTransform);
-	m_scene->Draw();
+	//m_scene->Draw();
 
 	// Bind the post process shader and the texture
 	m_postProcessShader.bind();
 	m_postProcessShader.bindUniform("colorTarget", 0);
-	m_postProcessShader.bindUniform("postProcessTarget", 1);
+	m_postProcessShader.bindUniform("windowWidth", (int)getWindowWidth());
+	m_postProcessShader.bindUniform("windowHeight", (int)getWindowHeight());
+	m_postProcessShader.bindUniform("deltaTime", m_dt);
+
+	m_postProcessShader.bindUniform("lightPosition", m_scene->GetLightPosition());
+	m_postProcessShader.bindUniform("eyePosition", m_scene->GetCamera()->GetPosition());
+	m_postProcessShader.bindUniform("fogSelector", 2);
+	m_postProcessShader.bindUniform("depthFog", 0);
+	m_postProcessShader.bindUniform("postProcessTarget", m_postProcessEffect);
 	m_renderTarget.getTarget(0).bind(0);
 
 	m_fullscreenQuadMesh.Draw();
@@ -328,6 +356,22 @@ bool GraphicsApp::LaunchShaders()
 		return false;
 	}
 
+	// Particle Effect Shader
+	m_particleShader.loadShader(aie::eShaderStage::VERTEX, "./shaders/particle.vert");
+	m_particleShader.loadShader(aie::eShaderStage::FRAGMENT, "./shaders/particle.frag");
+	
+	if (m_particleShader.link() == false)
+	{
+		printf("Particle Shader has an Error: %s\n", m_particleShader.getLastError());
+		return false;
+	}
+
+	m_particleEmitTransform = glm::mat4(
+		1,  0,  0, 0,
+		 0, 1,  0, 0,
+		 0,  0, 1, 0,
+		 0,  0,  0, 1);
+
 	
 	
 	if(!QuadTextureLoader())
@@ -413,8 +457,10 @@ void GraphicsApp::ImGUIRefresher()
 		m_currentSCamera = 2;
 		m_scene->SetCamera(STATIONARY, &m_sCameraZ);
 	}
+	ImGui::Separator();
 
-	ImGui::Spacing();
+	ImGui::DragInt("Post Process Effect", &m_postProcessEffect, 0.05f, 0, 16);
+	
 	ImGui::End();
 }
 

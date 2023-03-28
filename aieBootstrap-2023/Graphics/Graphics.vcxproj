@@ -170,6 +170,7 @@
     <ClCompile Include="FlyCamera.cpp" />
     <ClCompile Include="Instance.cpp" />
     <ClCompile Include="OrbitalCamera.cpp" />
+    <ClCompile Include="ParticleEmitter.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="SimpleCamera.cpp" />
     <ClCompile Include="GraphicsApp.cpp" />
@@ -187,6 +188,7 @@
     <ClInclude Include="FlyCamera.h" />
     <ClInclude Include="Instance.h" />
     <ClInclude Include="OrbitalCamera.h" />
+    <ClInclude Include="ParticleEmitter.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="SimpleCamera.h" />
     <ClInclude Include="GraphicsApp.h" />

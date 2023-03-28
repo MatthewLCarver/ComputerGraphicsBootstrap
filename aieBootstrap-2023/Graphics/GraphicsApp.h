@@ -9,6 +9,7 @@
 #include "Scene.h"
 #include "Instance.h"
 #include "RenderTarget.h"
+#include "ParticleEmitter.h"
 
 #include <imgui.h>
 #include <glm/mat4x4.hpp>
@@ -122,6 +123,7 @@ protected:
 	aie::ShaderProgram	m_texturedShader;
 	aie::ShaderProgram	m_normalLitShader;
 	aie::ShaderProgram	m_postProcessShader;
+	aie::ShaderProgram	m_particleShader;
 
 	aie::RenderTarget	m_renderTarget;
 	
@@ -163,12 +165,15 @@ protected:
 	StationaryCamera	m_sCameraZ = StationaryCamera(glm::vec3(-10, 1, 0), glm::vec3(0, 0, 0));
 	OrbitalCamera		m_orbitalCamera;
 	
-	Light m_light;
-	glm::vec3 m_ambientLight;
+	Light				m_light;
+	glm::vec3			m_ambientLight;
 
-	glm::vec3 m_cameraPosition;
+	glm::vec3			m_cameraPosition;
 
-	float m_rotationRate = 0.0f;
+	float				m_rotationRate = 0.0f;
+
+	ParticleEmitter*	m_emitter;
+	glm::mat4			m_particleEmitTransform;
 	
 
 private:
@@ -178,4 +183,5 @@ private:
 	int m_currentSCamera = 0;
 
 	ObjectToDraw m_objectToDraw = SPEARS;
+	float m_dt;
 };

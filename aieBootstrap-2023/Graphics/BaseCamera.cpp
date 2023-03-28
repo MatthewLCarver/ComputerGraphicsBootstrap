@@ -21,8 +21,24 @@ glm::vec3 BaseCamera::GetPosition() const
 
 glm::mat4 BaseCamera::GetWorldTransform(glm::vec3 _cameraPosition, glm::vec3 _eulerAngles, glm::vec3 _scale)
 {
-    return m_worldTransform;
+    return glm::translate(glm::mat4(1), m_position) *
+            glm::rotate(glm::mat4(1), glm::radians(_eulerAngles.z), glm::vec3(0, 0, 1)) *
+                glm::rotate(glm::mat4(1), glm::radians(_eulerAngles.y), glm::vec3(0, 1, 0)) *
+                    glm::rotate(glm::mat4(1), glm::radians(_eulerAngles.x), glm::vec3(1, 0, 0)) *
+                        glm::scale(glm::mat4(1), _scale) *
+                            glm::translate(glm::mat4(1), -_cameraPosition);
 }
+
+glm::mat4 BaseCamera::GetTransform(glm::vec3 _cameraPosition, glm::vec3 _eulerAngles, glm::vec3 _scale)
+{
+    return glm::translate(glm::mat4(1), _cameraPosition) *
+             glm::rotate(glm::mat4(1), glm::radians(_eulerAngles.z), glm::vec3(0, 0, 1)) *
+                 glm::rotate(glm::mat4(1), glm::radians(_eulerAngles.y), glm::vec3(0, 1, 0)) *
+                     glm::rotate(glm::mat4(1), glm::radians(_eulerAngles.x), glm::vec3(1, 0, 0)) *
+                         glm::scale(glm::mat4(1), _scale);
+}
+
+
 
 glm::mat4 BaseCamera::GetProjectionViewMatrix()
 {
@@ -67,6 +83,7 @@ void BaseCamera::SetAspectRatio(float _width, float _height)
 void BaseCamera::SetViewMatrix(glm::vec3 _from, glm::vec3 _to, glm::vec3 _up)
 {
     m_viewTransform = glm::lookAt(_from, _to, _up);
+    m_worldTransform = glm::inverse(m_viewTransform);
 }
 
 void BaseCamera::SetProjectionMatrix(float _fieldOfView, float _aspectRatio, float _near, float _far)

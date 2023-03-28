@@ -6,6 +6,7 @@ class BaseCamera
 public:
     glm::vec3 GetPosition() const;
     glm::mat4 GetWorldTransform(glm::vec3 _cameraPosition, glm::vec3 _eulerAngles, glm::vec3 _scale);
+    glm::mat4 GetTransform(glm::vec3 _cameraPosition, glm::vec3 _eulerAngles, glm::vec3 _scale);
     glm::mat4 GetProjectionViewMatrix();
     glm::mat4 GetProjectionMatrix();
     glm::mat4 GetViewMatrix();

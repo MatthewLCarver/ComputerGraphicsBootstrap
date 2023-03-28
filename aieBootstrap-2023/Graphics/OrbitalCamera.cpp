@@ -20,7 +20,8 @@ void OrbitalCamera::Update(float _deltaTime)
     m_phi = asin(direction.y);
     m_theta = atan2(direction.z, direction.x);
     
-    SetViewMatrix(m_position, direction, glm::vec3(0, 1, 0));
+    glm::vec3 up = glm::vec3(m_targetTransform[1]);
+    SetViewMatrix(m_position, m_position + direction, up);
 }
 
 void OrbitalCamera::SetTarget(glm::mat4 _transform, float _distanceToTarget)

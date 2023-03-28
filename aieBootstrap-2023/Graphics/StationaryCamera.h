@@ -7,6 +7,8 @@ public:
     StationaryCamera(glm::vec3 _position, glm::vec3 _rotation);
     ~StationaryCamera() {}
 
+    void Update(float _deltaTime);
+    
     void SetRotation(glm::vec3 _rotation);
     
 };
