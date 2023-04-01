@@ -119,9 +119,9 @@ void GraphicsApp::Update(float _deltaTime) {
 	UpdateCamera(_deltaTime);
 	UpdateWeapons();
 
-	m_emitter->Update(_deltaTime, camera->GetTransform(
+	/*m_emitter->Update(_deltaTime, camera->GetTransform(
 	camera->GetPosition(), glm::vec3(0), glm::vec3(1))
-	);
+	);*/
 
 	if (input->isKeyDown(aie::INPUT_KEY_ESCAPE))
 		quit();
@@ -187,7 +187,7 @@ void GraphicsApp::draw() {
 
 	m_particleShader.bind();
 	m_particleShader.bindUniform("ProjectionViewModel", pv * m_particleEmitTransform);
-	m_emitter->Draw();
+	//m_emitter->Draw();
 
 	//SphereDraw(pv * m_sphereTransform, m_sphereTransform);
 	

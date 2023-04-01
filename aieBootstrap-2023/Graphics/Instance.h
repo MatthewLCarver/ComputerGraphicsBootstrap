@@ -1,6 +1,16 @@
 ﻿#pragma once
 #include <glm/glm.hpp>
 
+///////////////////////////////////////////////////////////////////////////////////
+///		
+///		Instance.h
+///		Created: 2023-03-27
+///		Author: Matthew Carver
+///		Description: Instance class implementation for more modular object loading
+///		Modified: 2023-03-27
+///		
+///////////////////////////////////////////////////////////////////////////////////
+
 class FlyCamera;
 class Scene;
 struct Light;

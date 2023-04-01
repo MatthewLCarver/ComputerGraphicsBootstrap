@@ -1,6 +1,16 @@
 ﻿#pragma once
 #include "BaseCamera.h"
 
+///////////////////////////////////////////////////////////////////////////////////
+///		
+///		OrbitalCamera.h
+///		Created: 2023-03-20
+///		Author: Matthew Carver
+///		Description: Dynamic Orbital Camera class implementation
+///		Modified: 2023-03-21
+///		
+///////////////////////////////////////////////////////////////////////////////////
+
 class OrbitalCamera: public BaseCamera
 {
 public:

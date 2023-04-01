@@ -4,6 +4,17 @@
 #include <vector>
 #include <glm/mat4x4.hpp>
 
+///////////////////////////////////////////////////////////////////////////////////
+///		
+///		SceneObject.h
+///		Created: 2023-03-14
+///		Author: Matthew Carver
+///		Description: SceneObject class implementation for the solar system
+///					 simulation.
+///		Modified: 2023-03-14
+///		
+///////////////////////////////////////////////////////////////////////////////////
+
 class SceneObject
 {
 public:

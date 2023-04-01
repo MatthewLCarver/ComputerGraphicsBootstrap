@@ -1,6 +1,16 @@
 ﻿#pragma once
 #include <glm/glm.hpp>
 
+///////////////////////////////////////////////////////////////////////////////////
+///		
+///		SimpleCamera.h
+///		Created: 2023-03-20
+///		Author: Matthew Carver
+///		Description: Simple Dynamic Camera class implementation for testing
+///		Modified: 2023-03-21
+///		
+///////////////////////////////////////////////////////////////////////////////////
+
 class SimpleCamera
 {
 public:
