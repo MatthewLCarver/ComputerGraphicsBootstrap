@@ -1,4 +1,6 @@
 ﻿#include "Scene.h"
+
+#include "Gizmos.h"
 #include "Instance.h"
 
 Scene::Scene(BaseCamera* _camera, glm::vec2 _windowSize, Light& _light, glm::vec3 _ambientLightColor):
@@ -45,7 +47,12 @@ void Scene::RemoveInstance(Instance* _instance)
 void Scene::Update(float _time)
 {
     // Rotate the light to emulate a 'day/night' cycle
-    m_light.direction = glm::normalize(glm::vec3(glm::sin(_time) * 1.5f, glm::sin(_time) * 1.5f, glm::cos(_time) * 1.5f));
+    m_pointLights[0].direction = glm::vec3(glm::cos(_time) * 10, 2,  ((glm::sin(_time) * 1.5f) * (glm::cos(_time) * 1.5f)));
+}
+
+void Scene::SetGlobalLight(Light _light)
+{
+    m_light = _light;
 }
 
 void Scene::ClearInstances()

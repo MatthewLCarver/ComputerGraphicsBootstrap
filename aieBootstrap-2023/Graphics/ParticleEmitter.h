@@ -1,6 +1,16 @@
 ﻿#pragma once
 #define GLM_ENABLE_EXPERIMENTAL
 
+///////////////////////////////////////////////////////////////////////////////////
+///		
+///		ParticleEmitter.h
+///		Created: 2023-03-28
+///		Author: Matthew Carver
+///		Description: Particle Emitter class implementation
+///		Modified: 2023-03-28
+///		
+///////////////////////////////////////////////////////////////////////////////////
+
 #include <glm/ext.hpp>
 #include <gl_core_4_4.h>
 

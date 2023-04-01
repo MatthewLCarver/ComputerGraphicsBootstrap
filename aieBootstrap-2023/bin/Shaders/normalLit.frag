@@ -133,58 +133,6 @@ void main()
     {
         cellShade = vec4(0.0f, 0.0f, 0.0f, 1.0f);
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    /*
-    no normal map
-    vec2 texelSize = vec2(1.0f / 800.0f, 1.0f / 600.0f);
-    vec3 dx = vec3(texelSize.x, 0.0f, texture(normalTexture, vTexCoord + vec2(texelSize.x, 0.0f)).a - texture(normalTexture, vTexCoord).a);
-    vec3 dy = vec3(0.0f, texelSize.y, texture(normalTexture, vTexCoord + vec2(0.0f, texelSize.y)).a - texture(normalTexture, vTexCoord).a);
-    vec3 d = normalize(cross(dx, dy));
-    float f = abs(dot(N, d));
-    
-    if (f < 0.1f)
-    {
-        cellShade = vec4(0.0f, 0.0f, 0.0f, 1.0f);
-    }*/
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    /*
-    ... from the object
-    vec2 texCoord = vTexCoord;
-    vec4 texel = texture(normalTexture, texCoord);
-    vec3 normal = texel.rgb * 2.0f - 1.0f;
-    float depth = texel.a;
-    
-    vec2 texelSize = vec2(1.0f / 800.0f, 1.0f / 600.0f);
-    vec3 dx = vec3(texelSize.x, 0.0f, texture(normalTexture, texCoord + vec2(texelSize.x, 0.0f)).a - depth);
-    vec3 dy = vec3(0.0f, texelSize.y, texture(normalTexture, texCoord + vec2(0.0f, texelSize.y)).a - depth);
-    vec3 d = normalize(cross(dx, dy));
-    float f = abs(dot(normal, d));
-    
-    if (f < 0.9f)
-    {
-        rCopy = vec4(0.0f, 0.0f, 0.0f, 1.0f);
-    }*/
-    
-    
-    
-
 
     // Google OpenGL edge detection - Sobel Filter
  

@@ -4,6 +4,7 @@
 #include <list>
 
 #include "BaseCamera.h"
+#include "Gizmos.h"
 
 class FlyCamera;
 class Instance;
@@ -84,6 +85,7 @@ public:
     }
 
     void Update(float _deltatime);
+    void SetGlobalLight(Light _light);
 
     void ClearInstances();
     glm::vec3 GetLightPosition()

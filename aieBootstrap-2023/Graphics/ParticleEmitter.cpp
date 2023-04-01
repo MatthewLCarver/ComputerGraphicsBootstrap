@@ -2,8 +2,8 @@
 
 ParticleEmitter::ParticleEmitter() :
     m_particles(nullptr), m_firstDead(0), m_maxParticles(0),
-    m_position(0,0,0), m_vao(0), m_vbo(0), m_ibo(0),
-    m_vertexData(nullptr)
+    m_vao(0), m_vbo(0), m_ibo(0),
+    m_vertexData(nullptr), m_position(glm::vec3(0.0f,0.0f,0.0f))
 {
 }
 

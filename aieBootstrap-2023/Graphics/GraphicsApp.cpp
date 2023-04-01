@@ -53,8 +53,8 @@ bool GraphicsApp::Startup() {
 		glm::vec2(getWindowWidth(), getWindowHeight()),
 		m_light, m_ambientLight);
 
-	m_scene->AddPointLights(glm::vec3(5, 3, 0), glm::vec3(0, 1, 1), 1.0f);
-	//m_scene->AddPointLights(glm::vec3(-5, 3, 0), glm::vec3(0, .5f, 0), 50.0f);
+	m_scene->AddPointLights(glm::vec3(0, 0, 0), glm::vec3(0, 0, 0), 1.0f);
+	m_scene->AddPointLights(glm::vec3( 0, 5, 0), glm::vec3(0, 0, 0), 1.0f);
 	//m_scene->AddPointLights(glm::vec3(3, -5, 0), glm::vec3(0, 0, 1), 500.0f);
 	
 	
@@ -91,6 +91,11 @@ void GraphicsApp::Update(float _deltaTime) {
 	// add a transform so that we can see the axis
 	Gizmos::addTransform(mat4(1));
 
+	for (auto light : m_scene->GetPointLights())
+	{
+		Gizmos::addSphere(light.direction, 0.1f, 8, 8, glm::vec4(light.color, 1));
+	}
+
 	//m_solarSystem->Update(_deltaTime);
 	
 	// quit if we press escape
@@ -99,12 +104,11 @@ void GraphicsApp::Update(float _deltaTime) {
 	// Grab the time since the application has started
 	float time = getTime();
 
-	/*// use the time to add to the rotation rate variable (in radians)
+	// use the time to add to the rotation rate variable (in radians)
 	m_rotationRate = .002f;
-	
 	// Rotate the light to emulate a 'day/night' cycle
-	m_light.direction = glm::normalize(glm::vec3(1, glm::sin(time) * 1.5f, glm::cos(time) * 1.5f));*/
-
+	m_light.direction = glm::normalize(glm::vec3(1, glm::sin(time) * 1.5f, glm::cos(time) * 1.5f));
+	m_scene->SetGlobalLight(m_light);
 	
 	m_scene->Update(time);
 
@@ -174,10 +178,6 @@ void GraphicsApp::draw() {
 	// wipe the screen to the background colour
 	clearScreen();
 
-	/*// update perspective based on screen size
-	m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f, getWindowWidth() / (float)getWindowHeight(), 0.1f, 1000.0f);
-	*/
-
 	// create simple camera transforms
 	CameraTransforms();
 	
@@ -188,6 +188,8 @@ void GraphicsApp::draw() {
 	m_particleShader.bind();
 	m_particleShader.bindUniform("ProjectionViewModel", pv * m_particleEmitTransform);
 	m_emitter->Draw();
+
+	//SphereDraw(pv * m_sphereTransform, m_sphereTransform);
 	
 	Gizmos::draw(m_projectionMatrix * m_viewMatrix);
 
@@ -202,6 +204,7 @@ void GraphicsApp::draw() {
 	// Bind the post process shader and the texture
 	m_postProcessShader.bind();
 	m_postProcessShader.bindUniform("colorTarget", 0);
+	m_postProcessShader.bindUniform("depthTarget", 0);
 	m_postProcessShader.bindUniform("windowWidth", (int)getWindowWidth());
 	m_postProcessShader.bindUniform("windowHeight", (int)getWindowHeight());
 	m_postProcessShader.bindUniform("deltaTime", m_dt);
@@ -220,16 +223,14 @@ void GraphicsApp::draw() {
 	//SpearDraw(pv * m_spearTransform, m_spearTransform);
 	//SwordDraw(pv * m_swordTransform, m_swordTransform);
 
-	//ObjDraw(pv, m_spearTransform, &m_spearMesh);
-	//ObjDraw(pv, m_swordTransform, &m_swordMesh);
 	//BunnyDraw(pv  * m_bunnyTransform);
 	//PhongDraw(pv * m_bunnyTransform, m_bunnyTransform);
 
-	//BoxDraw(pv * m_boxTransform, m_boxTransform);
+	
 	//CylinderDraw(pv * m_cylinderTransform, m_cylinderTransform);*/
 
 	//m_solarSystem->Draw();
-
+	
 	
 	
 	
@@ -372,6 +373,14 @@ bool GraphicsApp::LaunchShaders()
 		 0,  0, 1, 0,
 		 0,  0,  0, 1);
 
+	m_phongShader.loadShader(aie::eShaderStage::VERTEX, "./shaders/phong.vert");
+	m_phongShader.loadShader(aie::eShaderStage::FRAGMENT, "./shaders/phong.frag");
+
+	if(m_phongShader.link() == false)
+	{
+		printf("Standard Phong Shader has an Error: %s\n", m_simpleShader.getLastError());
+		return false;
+	}
 	
 	
 	if(!QuadTextureLoader())
@@ -384,8 +393,10 @@ bool GraphicsApp::LaunchShaders()
 	*/
 	/*if(!CylinderLoader(10, 1.0f, 0.50f))
 		return false;*/
-	//if(!BoxLoader())
-	//	return false;
+	if(!BoxLoader())
+		return false;
+	if(!SphereLoader(12))
+		return false;
 	/*if(!BunnyLoader())
 		return false;*/
 
@@ -408,6 +419,14 @@ void GraphicsApp::ImGUIRefresher()
 	
 	ImGui::DragFloat3("Global Light Color", &m_light.color[0], 0.01f, 0.0f, 1.0f);
 	ImGui::DragFloat3("Global Light Direction", &m_light.direction[0], 0.01f, -1.0f, 1.0f);
+	ImGui::Separator();
+
+	ImGui::DragFloat3("Light 1 Color", &m_scene->GetPointLights()[0].color[0], 0.01f, 0.0f, 1.0f);
+	ImGui::DragFloat3("Light 1 Position", &m_scene->GetPointLights()[0].direction[0], 0.1f, -20.0f, 20.0f);	
+	ImGui::Separator();
+
+	ImGui::DragFloat3("Light 2 Color", &m_scene->GetPointLights()[1].color[0], 0.01f, 0.0f, 1.0f);
+	ImGui::DragFloat3("Light 2 Position", &m_scene->GetPointLights()[1].direction[0], 0.1f, -20.0f, 20.0f);	
 	ImGui::Separator();
 
 	if(ImGui::Button("Spears", ImVec2(100, 50)))
@@ -459,9 +478,61 @@ void GraphicsApp::ImGUIRefresher()
 	}
 	ImGui::Separator();
 
-	ImGui::DragInt("Post Process Effect", &m_postProcessEffect, 0.05f, 0, 16);
+	if(ImGui::Button("<<", ImVec2(70, 25)) && m_postProcessEffect > -1)
+		m_postProcessEffect--;
+	ImGui::SameLine();
+	ImGui::Text("Post Process Effects");
+	ImGui::SameLine();
+	if(ImGui::Button(">>", ImVec2(70, 25)) && m_postProcessEffect < 16)
+		m_postProcessEffect++;
+	ImGui::DragInt(GetPostProcessName(), &m_postProcessEffect, 0.5f, 0, 16);
 	
 	ImGui::End();
+}
+
+const char* GraphicsApp::GetPostProcessName()
+{
+	switch(m_postProcessEffect)
+	{
+	case -1:
+		return "Default";
+	case 0:
+		return "Box Blur";
+	case 1:
+		return "Distortion";
+	case 2:
+		return "Edge Detection";
+	case 3:
+		return "Sepia";
+	case 4:
+		return "Scan Lines";
+	case 5:
+		return "Grey Scale";
+	case 6:
+		return "Inverted";
+	case 7:
+		return "Pixelizer";
+	case 8:
+		return "Posterizer";
+	case 9:
+		return "Basic Fog";
+	case 10:
+		return "Drunk + Glitch";
+	case 11:
+		return "High Contrast";
+	case 12:
+		return "Rage";
+	case 13:
+		return "Depression";
+	case 14:
+		return "Greed";
+	case 15:
+		return "Black & White";
+	case 16:
+		return "Vignette";
+	default:
+		return "Spear";
+	}
 }
 
 bool GraphicsApp::QuadLoader()
@@ -488,9 +559,9 @@ bool GraphicsApp::QuadLoader()
 	
 	// This is a 10 'unit' wide quad
 	m_quadTransform = {
-		10,  0,  0, 0,
-		 0, 10,  0, 0,
-		 0,  0, 10, 0,
+		1,  0,  0, 0,
+		 0, 1,  0, 0,
+		 0,  0, 1, 0,
 		 0,  0,  0, 1
 	};
 
@@ -544,9 +615,9 @@ bool GraphicsApp::BoxLoader()
 	m_boxMesh.Initialise(8, vertices, 36, indices);
 	
 	m_boxTransform = {
-		5,  0,  0, 0,
-		 0, 5,  0, 0,
-		 0,  0, 5, 0,
+		1,  0,  0, 0,
+		 0, 1,  0, 0,
+		 0,  0, 1, 0,
 		 0,  0,  0, 1
 	};
 	
@@ -556,58 +627,40 @@ bool GraphicsApp::BoxLoader()
 void GraphicsApp::BoxDraw(glm::mat4 _pvm, glm::mat4 _transform)
 {
 	// Bind the Phong shader
-	m_phongShader.bind();
+	m_litPhongShader.bind();
 
-	m_phongShader.bindUniform("CameraPosition", m_cameraPosition);
+	m_litPhongShader.bindUniform("CameraPosition", m_cameraPosition);
 
 	// Bind the directional light
-	m_phongShader.bindUniform("LightDirection", m_light.direction);
+	m_litPhongShader.bindUniform("LightDirection", m_light.direction);
 
 	// Bind the pvm using the projection view model
-	m_phongShader.bindUniform("ProjectionViewModel", _pvm);
+	m_litPhongShader.bindUniform("ProjectionViewModel", _pvm);
 
 	// Bind the transform using the model matrix
-	m_phongShader.bindUniform("ModelMatrix", _transform);
+	m_litPhongShader.bindUniform("ModelMatrix", _transform);
 
 	// Bind the light color
-	m_phongShader.bindUniform("LightColor", (glm::vec3)m_light.color);
+	m_litPhongShader.bindUniform("LightColor", (glm::vec3)m_light.color);
 
 	// Bind the ambient light using the ambient light
-	m_phongShader.bindUniform("AmbientColor", m_ambientLight);
+	m_litPhongShader.bindUniform("AmbientColor", m_ambientLight);
 
 	// Bind the ambient, diffuse, specular and specular power
-	m_phongShader.bindUniform("Ka", glm::vec3(1.0f, 0.0f, 0.0f));
-	m_phongShader.bindUniform("Kd", glm::vec3(1.0f, 0.4f, 0.4f));
-	m_phongShader.bindUniform("Ks", glm::vec3(0.1f, 0.1f, 0.1f));
-	m_phongShader.bindUniform("specularPower", 10);
-
-	//m_bunnyMesh.draw();
-
+	m_litPhongShader.bindUniform("Ka", glm::vec3(1, 1, 1));
+	m_litPhongShader.bindUniform("Kd", glm::vec3(1.0f, 0.4f, 0.4f));
+	m_litPhongShader.bindUniform("Ks", glm::vec3(0.1f, 0.1f, 0.1f));
+	m_litPhongShader.bindUniform("specularPower", 10);
+	
 	// Rotates the transform
-	m_boxTransform = glm::rotate(m_boxTransform, m_rotationRate, glm::vec3(0, 1, 0));
-	
-	
-	/*// Bind the shader
-	m_simpleShader.bind();
-	
-	//Bind the transform
-	m_simpleShader.bindUniform("ProjectionViewModel", _pvm);*/
+	//m_boxTransform = glm::rotate(m_boxTransform, m_rotationRate, glm::vec3(0, 1, 0));
 
 	// Draw the quad using the Mesh's draw
 	m_boxMesh.Draw();
 }
 
 bool GraphicsApp::CylinderLoader(int _segments, float _height, float _radius)
-{
-	m_phongShader.loadShader(aie::eShaderStage::VERTEX, "./shaders/phong.vert");
-	m_phongShader.loadShader(aie::eShaderStage::FRAGMENT, "./shaders/phong.frag");
-
-	if(m_phongShader.link() == false)
-	{
-		printf("Cylinder Phong Shader has an Error: %s\n", m_simpleShader.getLastError());
-		return false;
-	}
-	
+{	
 	Mesh::Vertex* vertices = new Mesh::Vertex[_segments * 2 + 2];
 	for (int i = 0; i < _segments; ++i)
 	{
@@ -627,7 +680,16 @@ bool GraphicsApp::CylinderLoader(int _segments, float _height, float _radius)
 		indices[i * 6 + 5] = (i + 1) % _segments + _segments;
 	}
 
-	// cap the top and bottom of the cylinder	
+	// cap the top and bottom of the cylinder
+	for (int i = 0; i < _segments; ++i)
+	{
+		indices[_segments * 6 + i * 3 + 0] = _segments * 2;
+		indices[_segments * 6 + i * 3 + 1] = i;
+		indices[_segments * 6 + i * 3 + 2] = (i + 1) % _segments;
+		indices[_segments * 6 + _segments * 3 + i * 3 + 0] = _segments * 2 + 1;
+		indices[_segments * 6 + _segments * 3 + i * 3 + 1] = (i + 1) % _segments + _segments;
+		indices[_segments * 6 + _segments * 3 + i * 3 + 2] = i + _segments;
+	}
 
 	m_cylinderMesh.Initialise(_segments * 2 + 2, vertices, _segments * 6 + _segments * 6, indices);
 	m_cylinderTransform = {
@@ -675,115 +737,80 @@ void GraphicsApp::CylinderDraw(glm::mat4 _pvm, glm::mat4 _transform)
 	m_cylinderMesh.Draw();
 }
 
-bool GraphicsApp::IcosahedronLoader()
+bool GraphicsApp::SphereLoader(int _sphereSegments)
 {
-	m_phongShader.loadShader(aie::eShaderStage::VERTEX, "./shaders/phong.vert");
-	m_phongShader.loadShader(aie::eShaderStage::FRAGMENT, "./shaders/phong.frag");
-
-	if(m_phongShader.link() == false)
+	// Create the vertices and place them using phi and theta
+	Mesh::Vertex* vertices = new Mesh::Vertex[_sphereSegments * _sphereSegments];
+	for (int i = 0; i < _sphereSegments; ++i)
 	{
-		printf("Cylinder Phong Shader has an Error: %s\n", m_simpleShader.getLastError());
-		return false;
-	}
-	
-	Mesh::Vertex* vertices = new Mesh::Vertex[12];
-	// create a vertex a the centre top, then create 5 vertices around the top, then 5 vertices around the bottom rotating them by 36 degrees, then a vertex at the centre bottom
-	// maintain equilateral triangles
-	vertices[0].position = { 0, 1, 0, 1 };
-
-	// top 5 vertices
-	for (int i = 0; i < 5; ++i)
-	{
-		float theta = (i / (float)5) * glm::pi<float>() * 2.0f;
-		vertices[i + 1].position = { cos(theta) * 0.5f, 0.5f, sin(theta) * 0.5f, 1 };
+		float phi = (i / (float)_sphereSegments) * glm::pi<float>() * 2.0f;
+		for (int j = 0; j < _sphereSegments; ++j)
+		{
+			float theta = (j / (float)_sphereSegments) * glm::pi<float>();
+			vertices[i * _sphereSegments + j].position = { cos(phi) * sin(theta), cos(theta), sin(phi) * sin(theta), 1 };
+		}
 	}
 
-	// create the bottom 5 vertices rotated by 36 degrees from the upper 5
-	for (int i = 0; i < 5; ++i)
+	// create the indices
+	unsigned int* indices = new unsigned int[_sphereSegments * _sphereSegments * 6];
+	for (int i = 0; i < _sphereSegments; ++i)
 	{
-		float theta = (i / (float)5) * glm::pi<float>() * 2.0f;
-		vertices[i + 6].position = { cos(theta + glm::pi<float>() / 5) * 0.5f, -0.5f, sin(theta + glm::pi<float>() / 5) * 0.5f, 1 };
+		for (int j = 0; j < _sphereSegments; ++j)
+		{
+			indices[(i * _sphereSegments + j) * 6 + 0] = (i * _sphereSegments + j);
+			indices[(i * _sphereSegments + j) * 6 + 1] = ((i + 1) % _sphereSegments * _sphereSegments + j);
+			indices[(i * _sphereSegments + j) * 6 + 2] = (i * _sphereSegments + (j + 1) % _sphereSegments);
+			indices[(i * _sphereSegments + j) * 6 + 3] = ((i + 1) % _sphereSegments * _sphereSegments + j);
+			indices[(i * _sphereSegments + j) * 6 + 4] = ((i + 1) % _sphereSegments * _sphereSegments + (j + 1) % _sphereSegments);
+			indices[(i * _sphereSegments + j) * 6 + 5] = (i * _sphereSegments + (j + 1) % _sphereSegments);
+		}
 	}
-	
-	vertices[11].position = { 0, -1, 0, 1 };
-	
-	
-	// create and assign the indices of the d20 in a loop
-	unsigned int* indices = new unsigned int[60];
-	// arrange all the vertices into a sphere shape with the given vertices
-	// top 5 vertices
-	for (int i = 0; i < 5; ++i)
-	{
-		indices[i * 6 + 0] = 0;
-		indices[i * 6 + 1] = i + 1;
-		indices[i * 6 + 2] = (i + 1) % 5 + 1;
-	}
-	// bottom 5 vertices
-	for (int i = 0; i < 5; ++i)
-	{
-		indices[i * 6 + 15] = 11;
-		indices[i * 6 + 16] = i + 6;
-		indices[i * 6 + 17] = (i + 1) % 5 + 6;
-	}
-	// middle 10 vertices
-	for (int i = 0; i < 5; ++i)
-	{
-		indices[i * 6 + 30] = i + 1;
-		indices[i * 6 + 31] = i + 6;
-		indices[i * 6 + 32] = (i + 1) % 5 + 1;
 
-		indices[i * 6 + 33] = (i + 1) % 5 + 1;
-		indices[i * 6 + 34] = i + 6;
-		indices[i * 6 + 35] = (i + 1) % 5 + 6;
-	}
-	
-	m_icosahedronMesh.Initialise(12, vertices, 60, indices);
-	
-	m_icosahedronTransform = {
-		2,  0,  0, 0,
-		0, 2,  0, 0,
-		0,  0, 2, 0,
+	// initialise the mesh
+	m_sphereMesh.Initialise(_sphereSegments * _sphereSegments, vertices, _sphereSegments * _sphereSegments * 6, indices);
+	m_sphereTransform = {
+		1,  0,  0, 0,
+		0, 1,  0, 0,
+		0,  0, 1, 0,
 		0,  0,  0, 1
 	};
-
-	m_icosahedronTransform = glm::translate(m_icosahedronTransform, glm::vec3(0, 2, 5));
-
+	
 	return true;
 }
 
-void GraphicsApp::IcosahedronDraw(glm::mat4 _pvm, glm::mat4 _transform)
-{
+void GraphicsApp::SphereDraw(glm::mat4 _pv, glm::mat4 _transform)
+{		
 	// Bind the Phong shader
-	m_phongShader.bind();
+	m_litPhongShader.bind();
 
-	m_phongShader.bindUniform("CameraPosition", m_cameraPosition);
+	m_litPhongShader.bindUniform("CameraPosition", m_cameraPosition);
 
 	// Bind the directional light
-	m_phongShader.bindUniform("LightDirection", m_light.direction);
+	m_litPhongShader.bindUniform("LightDirection", m_light.direction);
 
 	// Bind the pvm using the projection view model
-	m_phongShader.bindUniform("ProjectionViewModel", _pvm);
+	m_litPhongShader.bindUniform("ProjectionViewModel", _pv * _transform);
 
 	// Bind the transform using the model matrix
-	m_phongShader.bindUniform("ModelMatrix", _transform);
+	m_litPhongShader.bindUniform("ModelMatrix", _transform);
 
 	// Bind the light color
-	m_phongShader.bindUniform("LightColor", (glm::vec3)m_light.color);
+	m_litPhongShader.bindUniform("LightColor", (glm::vec3)m_light.color);
 
 	// Bind the ambient light using the ambient light
-	m_phongShader.bindUniform("AmbientColor", m_ambientLight);
+	m_litPhongShader.bindUniform("AmbientColor", m_ambientLight);
 
 	// Bind the ambient, diffuse, specular and specular power
-	m_phongShader.bindUniform("Ka", glm::vec3(1.0f, 0.0f, 0.0f));
-	m_phongShader.bindUniform("Kd", glm::vec3(1.0f, 0.4f, 0.4f));
-	m_phongShader.bindUniform("Ks", glm::vec3(0.1f, 0.1f, 0.1f));
-	m_phongShader.bindUniform("specularPower", 10);
+	m_litPhongShader.bindUniform("Ka", glm::vec3(1.0f, 0.0f, 0.0f));
+	m_litPhongShader.bindUniform("Kd", glm::vec3(1.0f, 0.4f, 0.4f));
+	m_litPhongShader.bindUniform("Ks", glm::vec3(0.1f, 0.1f, 0.1f));
+	m_litPhongShader.bindUniform("specularPower", 10);
 
 	// Rotates the transform
-	m_icosahedronTransform = glm::rotate(m_icosahedronTransform, m_rotationRate, glm::vec3(0, 1, 0));
+	//m_sphereTransform = glm::rotate(m_sphereTransform, m_rotationRate, glm::vec3(0, 1, 0));
 
 	// Draw the quad using the Mesh's draw
-	m_icosahedronMesh.Draw();
+	m_sphereMesh.Draw();
 }
 
 bool GraphicsApp::BunnyLoader()
@@ -830,15 +857,6 @@ void GraphicsApp::BunnyDraw(glm::mat4 _pvm)
 
 bool GraphicsApp::SpearLoader()
 {
-	/*m_texturedShader.loadShader(aie::eShaderStage::VERTEX, "./shaders/normalLit.vert");
-	m_texturedShader.loadShader(aie::eShaderStage::FRAGMENT, "./shaders/NormalLit.frag");
-	
-	if (m_texturedShader.link() == false)
-	{
-		printf("Color Shader has an Error: %s\n", m_texturedShader.getLastError());
-		return false;
-	}*/
-
 	if(m_spearMesh.load("./soulspear/soulspear.obj", true, true) == false)
 	{
 		printf("Soul Spear Mesh Error!\n");
@@ -855,7 +873,7 @@ bool GraphicsApp::SpearLoader()
 	return true;
 }
 
-void GraphicsApp::SpearDraw(glm::mat4 _pvm, glm::mat4 _transform)
+/*void GraphicsApp::SpearDraw(glm::mat4 _pvm, glm::mat4 _transform)
 {
 	// Bind the shader
 	m_texturedShader.bind();
@@ -874,7 +892,7 @@ void GraphicsApp::SpearDraw(glm::mat4 _pvm, glm::mat4 _transform)
 
 	// Draw the bunny
 	m_spearMesh.draw();
-}
+}*/
 
 bool GraphicsApp::SwordLoader()
 {
@@ -896,7 +914,7 @@ bool GraphicsApp::SwordLoader()
 	return true;
 }
 
-void GraphicsApp::SwordDraw(glm::mat4 _pvm, glm::mat4 _transform)
+/*void GraphicsApp::SwordDraw(glm::mat4 _pvm, glm::mat4 _transform)
 {
 	// Bind the shader
 	m_normalLitShader.bind();	
@@ -931,7 +949,7 @@ void GraphicsApp::SwordDraw(glm::mat4 _pvm, glm::mat4 _transform)
 
 	// Draw the sword
 	m_swordMesh.draw();
-}
+}*/
 
 bool GraphicsApp::DragonLoader()
 {
@@ -1027,12 +1045,6 @@ void GraphicsApp::ObjDraw(glm::mat4 _pv, glm::mat4 _transform, aie::OBJMesh* _me
 	// Bind the transform using the model matrix
 	m_normalLitShader.bindUniform("ModelMatrix", _transform);
 	
-	/*//m_normalLitShader.bindUniform("normalTexture", 0);
-	
-	// Bind the texture to a specific location
-	m_swordTexture.bind(0);
-	m_swordNormalTexture.bind(1);*/
-
 	// Rotates the transform
 	_transform = glm::rotate(_transform, m_rotationRate, glm::vec3(0, 1, 0));
 

@@ -1,5 +1,15 @@
 #pragma once
 
+///////////////////////////////////////////////////////////////////////////////////
+///		
+///		GraphicsApp.h
+///		Created: 2023-03-10
+///		Author: Matthew Carver
+///		Description: GraphicsApp class implementation
+///		Modified: 2023-03-29
+///		
+///////////////////////////////////////////////////////////////////////////////////
+
 #include "Application.h"
 #include "FlyCamera.h"
 #include "Mesh.h"
@@ -48,7 +58,8 @@ protected:
 	void LoadWeaponMesh();
 	bool LaunchShaders();
 	void ImGUIRefresher();
-	
+	const char* GetPostProcessName();
+
 	bool QuadLoader();
 	void QuadDraw(glm::mat4 _pvm);
 
@@ -58,27 +69,8 @@ protected:
 	bool CylinderLoader(int _segments, float _height, float _radius);
 	void CylinderDraw(glm::mat4 _pvm, glm::mat4 _transform);
 
-	bool PyramidLoader();
-	void PyramidDraw(glm::mat4 _pvm);
-
-	bool SphereLoader();
-	void SphereDraw(glm::mat4 _pvm);
-
-	bool CapsuleLoader();
-	void CapsuleDraw(glm::mat4 _pvm);
-	
-	bool ConeLoader();
-	void ConeDraw(glm::mat4 _pvm);
-
-	bool GridLoader();
-	void GridDraw(glm::mat4 _pvm);
-
-	bool TorusLoader();
-	void TorusDraw(glm::mat4 _pvm);
-
-	bool IcosahedronLoader();
-	void IcosahedronDraw(glm::mat4 _pvm, glm::mat4 _transform);
-	
+	bool SphereLoader(int _sphereSegments);
+	void SphereDraw(glm::mat4 _pvm, glm::mat4 _transform);
 	
 	bool BunnyLoader();
 	void BunnyDraw(glm::mat4 _pvm);
@@ -137,11 +129,8 @@ protected:
 	Mesh				m_cylinderMesh;
 	glm::mat4			m_cylinderTransform;
 
-	Mesh				m_pyramidMesh;
-	glm::mat4			m_pyramidTransform;
-
-	Mesh				m_icosahedronMesh;
-	glm::mat4			m_icosahedronTransform;
+	Mesh				m_sphereMesh;
+	glm::mat4			m_sphereTransform;
 
 	aie::OBJMesh		m_bunnyMesh;
 	glm::mat4			m_bunnyTransform;
@@ -182,6 +171,6 @@ private:
 	bool m_previousDrawSwords = false;
 	int m_currentSCamera = 0;
 
-	ObjectToDraw m_objectToDraw = SPEARS;
+	ObjectToDraw m_objectToDraw = DRAGONS;
 	float m_dt;
 };

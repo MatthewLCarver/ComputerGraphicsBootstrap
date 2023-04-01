@@ -4,6 +4,7 @@
 in vec2 vTexCoord;
 
 uniform sampler2D colorTarget;
+uniform sampler2D depthTarget;
 uniform int postProcessTarget;
 uniform int windowWidth;
 uniform int windowHeight;
@@ -239,6 +240,33 @@ vec4 DistanceFog(vec2 texCoord)
     return vec4(finalColor, 1);
 }
 
+vec4 DepthOfField(vec2 texCoord)
+{
+    vec4 color = texture(colorTarget, texCoord);
+    
+    // Get the depth of the current pixel
+    float depth = texture(depthTarget, texCoord).r;
+    
+    // Get the depth of the pixel in the center of the screen
+    float centerDepth = texture(depthTarget, vec2(0.5, 0.5)).r;
+    
+    // Calculate the difference between the two depths
+    float difference = abs(depth - centerDepth);
+    
+    // If the difference is greater than 0.1, blur the pixel
+    if (difference > 0.01)
+    {
+        // Blur the pixel smoothly by lerping between the original color and the colors around the pixel
+        color = (color + texture(colorTarget, 
+        texCoord + vec2(0.0, 0.01)) + texture(colorTarget, 
+        + vec2(0.0, -0.01)) + texture(colorTarget, 
+        texCoord + vec2(0.01, 0.0)) + texture(colorTarget, 
+        texCoord + vec2(-0.01, 0.0))) / 5.0;
+    }
+    
+    return color;
+}
+
 vec4 Contrast(vec2 texCoord)
 {
     vec4 color = texture(colorTarget, texCoord);
@@ -359,7 +387,7 @@ void main()
             return;
         case 10:
             // Depth of Field
-            FragColor = Default(texCoord);
+            FragColor = DepthOfField(texCoord);
             return;
         case 11:
             // Contrast
