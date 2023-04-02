@@ -2,6 +2,9 @@
 
 #include <gl_core_4_4.h>
 
+/**
+ * \brief Creates SceneObjects for the Solar System
+ */
 SolarSystem::SolarSystem()
 {
     m_objects.push_back(new SceneObject(0, "Sun", 2.0f, 0.0f, 1.0f, 0.1f, glm::vec4(1, 1, 0, 1), nullptr));
@@ -30,6 +33,9 @@ SolarSystem::SolarSystem()
     
 }
 
+/**
+ * \brief Destructor for each object in the solar system
+ */
 SolarSystem::~SolarSystem()
 {
     for (int i = 0; i < m_objects.size();)
@@ -40,11 +46,18 @@ SolarSystem::~SolarSystem()
     delete &m_objects;
 }
 
+/**
+ * \brief Update the solar system
+ * \param _deltaTime The time since the last update
+ */
 void SolarSystem::Update(float _deltaTime)
 {
     m_objects[0]->Update(_deltaTime);
 }
 
+/**
+ * \brief Draw the solar system
+ */
 void SolarSystem::Draw()
 {
     m_objects[0]->Draw();

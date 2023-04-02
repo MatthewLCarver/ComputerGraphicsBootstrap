@@ -2,6 +2,9 @@
 #include <glm/ext.hpp>
 #include "Input.h"
 
+/**
+ * \brief Hard sets the camera's position and rotation on initialisation
+ */
 SimpleCamera::SimpleCamera()
 {
     m_position = glm::vec3(-10, 2, 0);
@@ -9,6 +12,10 @@ SimpleCamera::SimpleCamera()
     m_theta = 0;
 }
 
+/**
+ * \brief 
+ * \param _deltaTime Takes in the delta time to calculate the movement of the camera
+ */
 void SimpleCamera::Update(float _deltaTime)
 {
     aie::Input* input = aie::Input::getInstance();
@@ -59,6 +66,10 @@ void SimpleCamera::Update(float _deltaTime)
         m_moveSpeed = 5.0f;
 }
 
+/**
+ * \brief Returns the view matrix 
+ * \return Returns the view matrix
+ */
 glm::mat4 SimpleCamera::GetViewMatrix()
 {
     float thetaR = glm::radians(m_theta);
@@ -72,6 +83,12 @@ glm::mat4 SimpleCamera::GetViewMatrix()
                         glm::vec3(0, 1, 0));
 }
 
+/**
+ * \brief Returns the projection matrix
+ * \param _width Takes in the width of the screen
+ * \param _height Takes in the height of the screen
+ * \return Returns the projection matrix
+ */
 glm::mat4 SimpleCamera::GetProjectionMatrix(float _width, float _height)
 {
     return glm::perspective(glm::pi<float>() * 0.25f,
@@ -79,6 +96,13 @@ glm::mat4 SimpleCamera::GetProjectionMatrix(float _width, float _height)
                             0.1f, 1000.0f);
 }
 
+/**
+ * \brief Returns the transform matrix
+ * \param _position Takes in the position of the camera
+ * \param _eulerAngles Takes in the euler angles of the camera
+ * \param _scale Takes in the scale of the camera
+ * \return Returns the transform matrix
+ */
 glm::mat4 SimpleCamera::GetTransform(glm::vec3 _position, glm::vec3 _eulerAngles, glm::vec3 _scale)
 {
     return glm::mat4(0);

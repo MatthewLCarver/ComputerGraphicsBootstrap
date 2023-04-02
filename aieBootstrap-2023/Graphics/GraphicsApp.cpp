@@ -12,14 +12,24 @@ using glm::vec4;
 using glm::mat4;
 using aie::Gizmos;
 
+/**
+ * \brief The default constructor for the GraphicsApp class
+ */
 GraphicsApp::GraphicsApp() {
 
 }
 
+/**
+ * \brief The default destructor for the GraphicsApp class
+ */
 GraphicsApp::~GraphicsApp() {
 
 }
 
+/**
+ * \brief The startup function for the GraphicsApp class
+ * \return A boolean value indicating whether the startup was successful
+ */
 bool GraphicsApp::Startup() {
 	
 	setBackgroundColour(0.25f, 0.25f, 0.25f);
@@ -63,13 +73,19 @@ bool GraphicsApp::Startup() {
 	return LaunchShaders();
 }
 
+/**
+ * \brief The shutdown function for the GraphicsApp class that destroys the Gizmos and deletes the scene
+ */
 void GraphicsApp::Shutdown()
 {
 	Gizmos::destroy();
 	delete m_scene;
 }
 
-
+/**
+ * \brief The update function for the GraphicsApp class
+ * \param _deltaTime The time since the last frame
+ */
 void GraphicsApp::Update(float _deltaTime) {
 	m_dt = _deltaTime;
 	
@@ -129,6 +145,10 @@ void GraphicsApp::Update(float _deltaTime) {
 	ImGUIRefresher();
 }
 
+/**
+ * \brief Updates the camera based on the active camera type
+ * \param _deltaTime The time since the last frame
+ */
 void GraphicsApp::UpdateCamera(float _deltaTime)
 {
 	switch(m_scene->GetActiveCameraType())
@@ -161,16 +181,21 @@ void GraphicsApp::UpdateCamera(float _deltaTime)
 	}
 }
 
+/**
+ * \brief Updates the weapons based on the current weapon type
+ */
 void GraphicsApp::UpdateWeapons()
 {
 	if(m_drawSwords == m_previousDrawSwords)
 		return;
 
 	m_previousDrawSwords = m_drawSwords;
-	LoadWeaponMesh();
+	LoadObjectMesh();
 }
 
-
+/**
+ * \brief Binds the render target, draws the scene + objects and clears the screen
+ */
 void GraphicsApp::draw() {
 	// Bind the render target as the first part of our draw function
 	m_renderTarget.bind();
@@ -217,26 +242,11 @@ void GraphicsApp::draw() {
 	m_renderTarget.getTarget(0).bind(0);
 
 	m_fullscreenQuadMesh.Draw();
-	
-	/*//QuadDraw(pv * m_quadTransform);
-	//IcosahedronDraw(pv * m_icosahedronTransform, m_icosahedronTransform);
-	//SpearDraw(pv * m_spearTransform, m_spearTransform);
-	//SwordDraw(pv * m_swordTransform, m_swordTransform);
-
-	//BunnyDraw(pv  * m_bunnyTransform);
-	//PhongDraw(pv * m_bunnyTransform, m_bunnyTransform);
-
-	
-	//CylinderDraw(pv * m_cylinderTransform, m_cylinderTransform);*/
-
-	//m_solarSystem->Draw();
-	
-	
-	
-	
-
 }
 
+/**
+ * \brief Sets the view and projection matrices based on the active camera type
+ */
 void GraphicsApp::CameraTransforms()
 {
 	switch(m_scene->GetActiveCameraType())
@@ -274,11 +284,12 @@ void GraphicsApp::CameraTransforms()
 	default:
 		break;
 	}
-	
-	
 }
 
-void GraphicsApp::LoadWeaponMesh()
+/**
+ * \brief Clears the scenes instances and loads the new mesh based on the current object type
+ */
+void GraphicsApp::LoadObjectMesh()
 {
 	if(m_scene->GetInstances().size() > 0)
 	{
@@ -314,6 +325,10 @@ void GraphicsApp::LoadWeaponMesh()
 	}
 }
 
+/**
+ * \brief Loads the shaders and sets up the render target
+ * \return True if the shaders and render target are loaded correctly
+ */
 bool GraphicsApp::LaunchShaders()
 {
 #pragma region RenderTarget
@@ -382,24 +397,15 @@ bool GraphicsApp::LaunchShaders()
 		return false;
 	}
 	
-	
 	if(!QuadTextureLoader())
 		return false;
 	// Create a full screen quad
 	m_fullscreenQuadMesh.InitialiseFullscreenQuad();
 	
-	/*if(!IcosahedronLoader())
-		return false;
-	*/
-	/*if(!CylinderLoader(10, 1.0f, 0.50f))
-		return false;*/
 	if(!BoxLoader())
 		return false;
 	if(!SphereLoader(12))
 		return false;
-	/*if(!BunnyLoader())
-		return false;*/
-
 	
 	if(!SpearLoader())
 		return false;
@@ -408,11 +414,14 @@ bool GraphicsApp::LaunchShaders()
 	if(!DragonLoader())
 		return false;
 
-	LoadWeaponMesh();
+	LoadObjectMesh();
 	
 	return true;
 }
 
+/**
+ * \brief Creates a GUI for the user to interact with and influence the scene
+ */
 void GraphicsApp::ImGUIRefresher()
 {
 	ImGui::Begin("Computer Graphics Test Settings");
@@ -432,19 +441,19 @@ void GraphicsApp::ImGUIRefresher()
 	if(ImGui::Button("Spears", ImVec2(100, 50)))
 	{
 		m_objectToDraw = SPEARS;
-		LoadWeaponMesh();
+		LoadObjectMesh();
 	}
 	ImGui::SameLine();
 	if(ImGui::Button("Swords", ImVec2(100, 50)))
 	{
 		m_objectToDraw = SWORDS;
-		LoadWeaponMesh();
+		LoadObjectMesh();
 	}
 	ImGui::SameLine();
 	if(ImGui::Button("Dragons", ImVec2(100, 50)))
 	{
 		m_objectToDraw = DRAGONS;
-		LoadWeaponMesh();
+		LoadObjectMesh();
 	}
 	ImGui::Separator();
 
@@ -490,6 +499,10 @@ void GraphicsApp::ImGUIRefresher()
 	ImGui::End();
 }
 
+/**
+ * \brief Gets the name of the current post process effect
+ * \return The name of the current post process effect
+ */
 const char* GraphicsApp::GetPostProcessName()
 {
 	switch(m_postProcessEffect)
@@ -535,6 +548,10 @@ const char* GraphicsApp::GetPostProcessName()
 	}
 }
 
+/**
+ * \brief Loads a quad mesh using a simple shader
+ * \return True if the quad was loaded successfully
+ */
 bool GraphicsApp::QuadLoader()
 {
 	m_simpleShader.loadShader(aie::eShaderStage::VERTEX, "./shaders/simple.vert");
@@ -568,6 +585,10 @@ bool GraphicsApp::QuadLoader()
 	return true;
 }
 
+/**
+ * \brief Draws a quad using the simple shader
+ * \param _pvm The projection view model matrix
+ */
 void GraphicsApp::QuadDraw(glm::mat4 _pvm)
 {
 	// Bind the shader
@@ -580,6 +601,10 @@ void GraphicsApp::QuadDraw(glm::mat4 _pvm)
 	m_quadMesh.Draw();
 }
 
+/**
+ * \brief Loads a box mesh using a phong shader
+ * \return True if the box was loaded successfully
+ */
 bool GraphicsApp::BoxLoader()
 {
 	m_phongShader.loadShader(aie::eShaderStage::VERTEX, "./shaders/phong.vert");
@@ -624,6 +649,11 @@ bool GraphicsApp::BoxLoader()
 	return true;
 }
 
+/**
+ * \brief Draws a box using the phong shader
+ * \param _pvm The projection view model matrix
+ * \param _transform The model matrix
+ */
 void GraphicsApp::BoxDraw(glm::mat4 _pvm, glm::mat4 _transform)
 {
 	// Bind the Phong shader
@@ -659,6 +689,13 @@ void GraphicsApp::BoxDraw(glm::mat4 _pvm, glm::mat4 _transform)
 	m_boxMesh.Draw();
 }
 
+/**
+ * \brief Loads a cylinder mesh using a phong shader
+ * \param _segments The number of segments to use
+ * \param _height The height of the cylinder
+ * \param _radius The radius of the cylinder
+ * \return True if the cylinder was loaded successfully
+ */
 bool GraphicsApp::CylinderLoader(int _segments, float _height, float _radius)
 {	
 	Mesh::Vertex* vertices = new Mesh::Vertex[_segments * 2 + 2];
@@ -702,6 +739,11 @@ bool GraphicsApp::CylinderLoader(int _segments, float _height, float _radius)
 	return true;
 }
 
+/**
+ * \brief Draws a cylinder using the phong shader
+ * \param _pvm The projection view model matrix
+ * \param _transform The model matrix
+ */
 void GraphicsApp::CylinderDraw(glm::mat4 _pvm, glm::mat4 _transform)
 {
 	// Bind the Phong shader
@@ -737,6 +779,11 @@ void GraphicsApp::CylinderDraw(glm::mat4 _pvm, glm::mat4 _transform)
 	m_cylinderMesh.Draw();
 }
 
+/**
+ * \brief Loads a sphere mesh using a phong shader
+ * \param _sphereSegments The number of segments to use
+ * \return True if the sphere was loaded successfully
+ */
 bool GraphicsApp::SphereLoader(int _sphereSegments)
 {
 	// Create the vertices and place them using phi and theta
@@ -778,6 +825,11 @@ bool GraphicsApp::SphereLoader(int _sphereSegments)
 	return true;
 }
 
+/**
+ * \brief Draws a sphere using the phong shader
+ * \param _pv The projection view matrix
+ * \param _transform The model matrix
+ */
 void GraphicsApp::SphereDraw(glm::mat4 _pv, glm::mat4 _transform)
 {		
 	// Bind the Phong shader
@@ -813,6 +865,10 @@ void GraphicsApp::SphereDraw(glm::mat4 _pv, glm::mat4 _transform)
 	m_sphereMesh.Draw();
 }
 
+/**
+ * \brief Loads a bunny mesh using a phong shader
+ * \return True if the bunny was loaded successfully
+ */
 bool GraphicsApp::BunnyLoader()
 {
 	m_phongShader.loadShader(aie::eShaderStage::VERTEX, "./shaders/phong.vert");
@@ -840,6 +896,10 @@ bool GraphicsApp::BunnyLoader()
 	return true;
 }
 
+/**
+ * \brief Draws a bunny using a phong shader
+ * \param _pvm The projection view model matrix
+ */
 void GraphicsApp::BunnyDraw(glm::mat4 _pvm)
 {
 	// Bind the shader
@@ -855,6 +915,10 @@ void GraphicsApp::BunnyDraw(glm::mat4 _pvm)
 	m_bunnyMesh.draw();
 }
 
+/**
+ * \brief Loads a spear mesh
+ * \return True if the spear was loaded successfully
+ */
 bool GraphicsApp::SpearLoader()
 {
 	if(m_spearMesh.load("./soulspear/soulspear.obj", true, true) == false)
@@ -873,27 +937,10 @@ bool GraphicsApp::SpearLoader()
 	return true;
 }
 
-/*void GraphicsApp::SpearDraw(glm::mat4 _pvm, glm::mat4 _transform)
-{
-	// Bind the shader
-	m_texturedShader.bind();
-	
-	//Bind the transform
-	m_texturedShader.bindUniform("ProjectionViewModel", _pvm);
-
-	// Bind the diffuse texture location
-	m_texturedShader.bindUniform("diffuseTexture", 0);
-
-	// Bind the texture to a specific location
-	m_spearTexture.bind(0);
-
-	// Rotates the transform
-	m_spearTransform = glm::rotate(m_spearTransform, m_rotationRate, glm::vec3(0, 1, 0));
-
-	// Draw the bunny
-	m_spearMesh.draw();
-}*/
-
+/**
+ * \brief Loads a sword mesh
+ * \return True if the sword was loaded successfully
+ */
 bool GraphicsApp::SwordLoader()
 {
 	if(m_swordMesh.load("./artorias/sword.obj", true, true) == false)
@@ -909,48 +956,13 @@ bool GraphicsApp::SwordLoader()
 		0,  0,  0, 1
 	};
 
-	//m_swordTransform = glm::translate(m_swordTransform, glm::vec3(15.0f, 13.0f, 0.0f));
-
 	return true;
 }
 
-/*void GraphicsApp::SwordDraw(glm::mat4 _pvm, glm::mat4 _transform)
-{
-	// Bind the shader
-	m_normalLitShader.bind();	
-
-	m_phongShader.bindUniform("CameraPosition",
-		glm::vec3(glm::inverse(m_viewMatrix)[3]));
-
-	// Bind the directional light
-	m_phongShader.bindUniform("LightDirection", m_light.direction);
-	// Bind the light color
-	m_phongShader.bindUniform("LightColor", (glm::vec3)m_light.color);
-	// Bind the ambient light using the ambient light
-	m_phongShader.bindUniform("AmbientColor", m_ambientLight);
-	
-	// Bind the pvm using the projection view model
-	m_phongShader.bindUniform("ProjectionViewModel", _pvm);
-
-	// Bind the diffuse texture location
-	m_normalLitShader.bindUniform("diffuseTexture", 0);
-	
-	// Bind the transform using the model matrix
-	m_phongShader.bindUniform("ModelMatrix", _transform);
-	
-	m_normalLitShader.bindUniform("normalTexture", 0);
-	
-	// Bind the texture to a specific location
-	m_swordTexture.bind(0);
-	m_swordNormalTexture.bind(1);
-
-	// Rotates the transform
-	m_swordTransform = glm::rotate(m_swordTransform, m_rotationRate, glm::vec3(0, 1, 0));
-
-	// Draw the sword
-	m_swordMesh.draw();
-}*/
-
+/**
+ * \brief Loads a dragon mesh
+ * \return True if the dragon was loaded successfully
+ */
 bool GraphicsApp::DragonLoader()
 {
 	if(m_dragonMesh.load("./stanford/Dragon.obj", true, true) == false)
@@ -969,8 +981,10 @@ bool GraphicsApp::DragonLoader()
 	return true;
 }
 
-
-
+/**
+ * \brief Loads a quad mesh and a texture shader
+ * \return True if the quad was loaded successfully
+ */
 bool GraphicsApp::QuadTextureLoader()
 {
 	m_texturedShader.loadShader(aie::eShaderStage::VERTEX, "./shaders/textured.vert");
@@ -987,10 +1001,8 @@ bool GraphicsApp::QuadTextureLoader()
 		printf("Failed to load the grid texture correctly\n");
 		return false;
 	}
-
 	
 	m_quadMesh.InitialiseQuad();
-	
 	
 	// This is a 10 'unit' wide quad
 	m_quadTransform = {
@@ -1003,6 +1015,10 @@ bool GraphicsApp::QuadTextureLoader()
 	return true;
 }
 
+/**
+ * \brief Draws a quad using a texture shader
+ * \param _pvm The projection view model matrix
+ */
 void GraphicsApp::QuadTextureDraw(glm::mat4 _pvm)
 {
 	// Bind the shader
@@ -1022,6 +1038,12 @@ void GraphicsApp::QuadTextureDraw(glm::mat4 _pvm)
 	m_quadMesh.Draw();
 }
 
+/**
+ * \brief Draws a mesh using a normal lit shader
+ * \param _pv The projection view matrix
+ * \param _transform The transform matrix
+ * \param _mesh The mesh to draw
+ */
 void GraphicsApp::ObjDraw(glm::mat4 _pv, glm::mat4 _transform, aie::OBJMesh* _mesh)
 {
 	m_normalLitShader.bind();	
@@ -1052,6 +1074,11 @@ void GraphicsApp::ObjDraw(glm::mat4 _pv, glm::mat4 _transform, aie::OBJMesh* _me
 	_mesh->draw();
 }
 
+/**
+ * \brief Draws a bunny mesh using a Phong shader
+ * \param _pvm The projection view model matrix
+ * \param _transform The transform matrix
+ */
 void GraphicsApp::PhongDraw(glm::mat4 _pvm, glm::mat4 _transform)
 {
 	// Bind the Phong shader

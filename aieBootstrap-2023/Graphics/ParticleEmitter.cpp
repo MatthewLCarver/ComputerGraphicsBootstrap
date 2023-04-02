@@ -1,5 +1,8 @@
 ﻿#include "ParticleEmitter.h"
 
+/**
+ * \brief Default constructor for a particle emitter
+ */
 ParticleEmitter::ParticleEmitter() :
     m_particles(nullptr), m_firstDead(0), m_maxParticles(0),
     m_vao(0), m_vbo(0), m_ibo(0),
@@ -7,7 +10,19 @@ ParticleEmitter::ParticleEmitter() :
 {
 }
 
-
+/**
+ * \brief Constructor for a particle emitter
+ * \param _maxParticles Set the maximum number of particles
+ * \param _emitRate Set the rate at which particles are emitted
+ * \param _lifespanMin Set the minimum lifespan of a particle
+ * \param _lifespanMax Set the maximum lifespan of a particle
+ * \param _velocityMin Set the minimum velocity of a particle
+ * \param _velocityMax Set the maximum velocity of a particle
+ * \param _startSize Set the starting size of a particle
+ * \param _endSize Set the ending size of a particle
+ * \param _startColor Set the starting color of a particle
+ * \param _endColor Set the ending color of a particle
+ */
 ParticleEmitter::ParticleEmitter(unsigned _maxParticles, unsigned _emitRate,
                                  float _lifespanMin, float _lifespanMax, float _velocityMin, float _velocityMax,
                                  float _startSize, float _endSize, glm::vec4& _startColor, const glm::vec4& _endColor):
@@ -18,6 +33,9 @@ ParticleEmitter::ParticleEmitter(unsigned _maxParticles, unsigned _emitRate,
 {
 }
 
+/**
+ * \brief Destructor for a particle emitter
+ */
 ParticleEmitter::~ParticleEmitter()
 {
     delete[] m_particles;
@@ -28,6 +46,19 @@ ParticleEmitter::~ParticleEmitter()
     glDeleteBuffers(1, &m_ibo);
 }
 
+/**
+ * \brief Initialise the particle emitter
+ * \param _maxParticles Set the maximum number of particles
+ * \param _emitRate Set the rate at which particles are emitted
+ * \param _lifespanMin Set the minimum lifespan of a particle
+ * \param _lifespanMax Set the maximum lifespan of a particle
+ * \param _velocityMin Set the minimum velocity of a particle
+ * \param _velocityMax Set the maximum velocity of a particle
+ * \param _startSize Set the starting size of a particle
+ * \param _endSize Set the ending size of a particle
+ * \param _startColor Set the starting color of a particle
+ * \param _endColor Set the ending color of a particle
+ */
 void ParticleEmitter::Initialise(unsigned _maxParticles, unsigned _emitRate, float _lifespanMin, float _lifespanMax, float _velocityMin, float _velocityMax, float _startSize, float _endSize, glm::vec4& _startColor, const glm::vec4& _endColor)
 {
     // Set up emit timers
@@ -94,8 +125,9 @@ void ParticleEmitter::Initialise(unsigned _maxParticles, unsigned _emitRate, flo
     delete[] indexData;
 }
 
-
-
+/**
+ * \brief Emit new particle/s from the emitter
+ */
 void ParticleEmitter::Emit()
 {
     // Check if there are any available particles for the system to emit
@@ -133,6 +165,9 @@ void ParticleEmitter::Emit()
     
 }
 
+/**
+ * \brief Update the particle emitter
+ */
 void ParticleEmitter::Update(float _deltaTime, const glm::mat4& _cameraTransform)
 {
     // This will move and update all of the alive particles
@@ -218,6 +253,9 @@ void ParticleEmitter::Update(float _deltaTime, const glm::mat4& _cameraTransform
     
 }
 
+/**
+ * \brief Draw the particles from the emitter
+ */
 void ParticleEmitter::Draw()
 {
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);

@@ -55,7 +55,7 @@ public:
 	void CameraTransforms();
 	
 protected:
-	void LoadWeaponMesh();
+	void LoadObjectMesh();
 	bool LaunchShaders();
 	void ImGUIRefresher();
 	const char* GetPostProcessName();

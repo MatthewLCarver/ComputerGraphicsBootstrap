@@ -1,7 +1,10 @@
 ﻿#include "StationaryCamera.h"
 
-
-
+/**
+ * \brief Initialises the camera and aspect ratio
+ * \param _position The position of the camera
+ * \param _rotation The rotation of the camera
+ */
 StationaryCamera::StationaryCamera(glm::vec3 _position, glm::vec3 _rotation)
 {
     m_position = _position;
@@ -10,6 +13,10 @@ StationaryCamera::StationaryCamera(glm::vec3 _position, glm::vec3 _rotation)
     SetRotation(_rotation);
 }
 
+/**
+ * \brief Updates the camera's view matrix based on the position and rotation
+ * \param _deltaTime Takes in the delta time between frames
+ */
 void StationaryCamera::Update(float _deltaTime)
 {
     float thetaR = glm::radians(m_theta);
@@ -24,6 +31,10 @@ void StationaryCamera::Update(float _deltaTime)
     SetViewMatrix(m_position, m_position + forward, up);
 }
 
+/**
+ * \brief Rotates the camera by the given euler angles and sets the phi and theta values
+ * \param _rotation Euler angles 
+ */
 void StationaryCamera::SetRotation(glm::vec3 _rotation)
 {
     m_theta = _rotation.x;

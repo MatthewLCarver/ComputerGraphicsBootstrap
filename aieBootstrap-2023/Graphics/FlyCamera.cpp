@@ -4,6 +4,9 @@
 #include <Input.h>
 #include <glm/gtc/quaternion.hpp>
 
+/**
+ * \brief Default constructor for a FlyCamera
+ */
 FlyCamera::FlyCamera()
 {
     m_position = glm::vec3(-10, 2, 0);
@@ -15,6 +18,10 @@ FlyCamera::FlyCamera()
     m_up = glm::vec3(0, 1, 0);
 }
 
+/**
+ * \brief Updates the camera based on user input and the delta time
+ * \param _deltaTime The time since the last frame
+ */
 void FlyCamera::Update(float _deltaTime)
 {
     aie::Input* input = aie::Input::getInstance();
@@ -64,6 +71,10 @@ void FlyCamera::Update(float _deltaTime)
     SetViewMatrix(m_position, m_position + forward, m_up);
 }
 
+/**
+ * \brief Sets the speed of the camera
+ * \param _speed The speed of the camera
+ */
 void FlyCamera::SetSpeed(float _speed)
 {
     m_speed = _speed;

@@ -1,6 +1,9 @@
 #include "Mesh.h"
 #include <gl_core_4_4.h>
 
+/**
+ * \brief Deconstructor for the Mesh class
+ */
 Mesh::~Mesh()
 {
 	// If the array does not equal zero,
@@ -11,6 +14,9 @@ Mesh::~Mesh()
 
 }
 
+/**
+ * \brief Initialises the mesh with a quad
+ */
 void Mesh::InitialiseQuad()
 {
 	// Check if the mesh is not initialised already
@@ -78,6 +84,9 @@ void Mesh::InitialiseQuad()
 	m_triCount = 2;
 }
 
+/**
+ * \brief Initialises the mesh with a fullscreen quad for post processing
+ */
 void Mesh::InitialiseFullscreenQuad()
 {
 	// Check if the mesh is not initialised already
@@ -118,6 +127,13 @@ void Mesh::InitialiseFullscreenQuad()
 		
 }
 
+/**
+ * \brief Initialises the mesh for a bespoke model
+ * \param _vertexCount Set the number of vertices
+ * \param _vertices Set the vertices
+ * \param _indexCount Set the number of indices
+ * \param _indices Set the indices
+ */
 void Mesh::Initialise(unsigned _vertexCount, const Vertex* _vertices, unsigned _indexCount, unsigned* _indices)
 {
 	// Check if the mesh is not initialised already
@@ -173,6 +189,9 @@ void Mesh::Initialise(unsigned _vertexCount, const Vertex* _vertices, unsigned _
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
+/**
+ * \brief Draws the mesh
+ */
 void Mesh::Draw()
 {
 	glBindVertexArray(m_vao);
@@ -181,15 +200,6 @@ void Mesh::Draw()
 	m_ibo != 0 ? 
 		glDrawElements(GL_TRIANGLES, 3 * m_triCount, GL_UNSIGNED_INT, 0) :
 		glDrawArrays(GL_TRIANGLES, 0, 3 * m_triCount);
-		
-	/*if (m_ibo != 0)
-	{
-		glDrawElements(GL_TRIANGLES, 3 * m_triCount, GL_UNSIGNED_INT, 0);
-	}
-	else 
-	{
-		glDrawArrays(GL_TRIANGLES, 0, 3 * m_triCount);
-	}*/
 }
 
 
